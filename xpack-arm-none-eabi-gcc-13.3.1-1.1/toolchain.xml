@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<Toolchain xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <ToolchainName>arm-none-eabi (third-party)</ToolchainName>
+  <ToolchainType>Embedded</ToolchainType>
+  <PathDetectionKeyStrip>0</PathDetectionKeyStrip>
+  <GNUTargetID>arm-none-eabi</GNUTargetID>
+  <CompatibleTargetID>arm-eabi</CompatibleTargetID>
+  <ToolchainID>0ad7b123-c567-4cab-9d89-57034c5ba31b</ToolchainID>
+  <ArgumentEscapingMode>Normal</ArgumentEscapingMode>
+  <BinaryDirectory>bin</BinaryDirectory>
+  <Prefix>arm-none-eabi-</Prefix>
+  <Make>$(VISUALGDB_DIR)/make.exe</Make>
+  <IsCygwinBased>false</IsCygwinBased>
+  <GCCVersion>13.3.1</GCCVersion>
+  <GDBVersion>(xPack</GDBVersion>
+  <PathStyle>Auto</PathStyle>
+  <Subtype>GCC</Subtype>
+  <Revision>0</Revision>
+  <RequiresExplicitSysrootSpecification>false</RequiresExplicitSysrootSpecification>
+  <TargetSpecificLayoutVersion>0</TargetSpecificLayoutVersion>
+</Toolchain>

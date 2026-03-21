@@ -1,0 +1,100 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <_NuttxRootKernelPath Condition="'$(_NuttxRootKernelPath)' == ''">$(NuttxRootKernelPath)</_NuttxRootKernelPath>
+
+    <!-- Source mode: derive ILC paths from NuttX app root if not explicitly set -->
+    <_NuttxIlcBasePath Condition="'$(_NuttxIlcBasePath)' == '' and '$(NuttxRootAppPath)' != ''">$(NuttxRootAppPath)\ics\NativeAot\dotnet_toolchain\net10_linux_arm_runtime\Release</_NuttxIlcBasePath>
+    <_NuttxIlcBasePath Condition="'$(_NuttxIlcBasePath)' == '' and '$(_NuttxRootKernelPath)' != ''">$(_NuttxRootKernelPath)\ics\NativeAot\dotnet_toolchain\net10_linux_arm_runtime\Release</_NuttxIlcBasePath>
+    <IlcFrameworkNativePath Condition="'$(IlcFrameworkNativePath)' == '' and '$(_NuttxIlcBasePath)' != ''">$(_NuttxIlcBasePath)\native</IlcFrameworkNativePath>
+    <IlcFrameworkPath Condition="'$(IlcFrameworkPath)' == '' and '$(_NuttxIlcBasePath)' != ''">$(_NuttxIlcBasePath)\lib</IlcFrameworkPath>
+    <IlcSdkPath Condition="'$(IlcSdkPath)' == '' and '$(IlcFrameworkNativePath)' != ''">$(IlcFrameworkNativePath)</IlcSdkPath>
+    <IlcToolsPath Condition="'$(IlcToolsPath)' == '' and '$(NuttxRootAppPath)' != ''">$(NuttxRootAppPath)\ics\NativeAot\dotnet_toolchain\compiler</IlcToolsPath>
+
+    <!-- Package-mode defaults -->
+    <_IcsSdkLinkTemplate Condition="'$(_IcsSdkLinkTemplate)' == ''">$(IcsCSharpSdk)\libs\link_template.cmd</_IcsSdkLinkTemplate>
+    <_IcsIlcBasePath Condition="'$(_IcsIlcBasePath)' == '' and '$(IcsCSharpSdk)' != ''">$(IcsCSharpSdk)\dotnet_toolchain\net10_linux_arm_runtime\Release</_IcsIlcBasePath>
+    <IlcFrameworkNativePath Condition="'$(IlcFrameworkNativePath)' == '' and '$(_IcsIlcBasePath)' != ''">$(_IcsIlcBasePath)\native</IlcFrameworkNativePath>
+    <IlcFrameworkPath Condition="'$(IlcFrameworkPath)' == '' and '$(_IcsIlcBasePath)' != ''">$(_IcsIlcBasePath)\lib</IlcFrameworkPath>
+    <IlcSdkPath Condition="'$(IlcSdkPath)' == '' and '$(_IcsIlcBasePath)' != ''">$(_IcsIlcBasePath)\native</IlcSdkPath>
+    <IlcFrameworkNativePath Condition="'$(IlcFrameworkNativePath)' != '' and !HasTrailingSlash('$(IlcFrameworkNativePath)')">$(IlcFrameworkNativePath)\</IlcFrameworkNativePath>
+    <IlcFrameworkPath Condition="'$(IlcFrameworkPath)' != '' and !HasTrailingSlash('$(IlcFrameworkPath)')">$(IlcFrameworkPath)\</IlcFrameworkPath>
+    <_IcsGccRoot Condition="'$(_IcsGccRoot)' == '' and '$(IcsCSharpSdk)' != ''">$(IcsCSharpSdk)\xpack-arm-none-eabi-gcc-13.3.1-1.1</_IcsGccRoot>
+    <_IcsGccBin Condition="'$(_IcsGccBin)' == '' and '$(_IcsGccRoot)' != ''">$(_IcsGccRoot)\bin</_IcsGccBin>
+    <CppCompilerAndLinker Condition="'$(CppCompilerAndLinker)' == '' and '$(_IcsGccBin)' != ''">arm-none-eabi-gcc.exe</CppCompilerAndLinker>
+    <CppLinker Condition="'$(CppLinker)' == '' and '$(CppCompilerAndLinker)' != ''">$(CppCompilerAndLinker)</CppLinker>
+    <ObjCopyName Condition="'$(ObjCopyName)' == '' and '$(_IcsGccBin)' != ''">arm-none-eabi-objcopy.exe</ObjCopyName>
+    <_CommandProbe Condition="'$(OS)' == 'Windows_NT' and '$(_IcsGccBin)' != ''">cmd /c &quot;set PATH=$(_IcsGccBin);%PATH%&amp;&amp; where /Q&quot;</_CommandProbe>
+    <_SkipNativeLink Condition="'$(IcsCSharpSdk)' != '' and '$(CSharpObjectFilePath)' == ''">true</_SkipNativeLink>
+
+    <!-- When we will skip native linking, bypass linker probe on Windows -->
+    <IcsBypassLinkerProbe Condition="'$(IcsBypassLinkerProbe)' == '' and '$(PublishAot)' == 'true' and ( '$(CSharpObjectFilePath)' != '' or '$(IcsCSharpSdk)' != '' )">true</IcsBypassLinkerProbe>
+    <CppCompilerAndLinker Condition="'$(OS)' == 'Windows_NT' and '$(IcsBypassLinkerProbe)' == 'true' and '$(CppCompilerAndLinker)' == ''">cmd</CppCompilerAndLinker>
+    <CppLinker Condition="'$(OS)' == 'Windows_NT' and '$(IcsBypassLinkerProbe)' == 'true' and '$(CppLinker)' == ''">cmd</CppLinker>
+    <ObjCopyName Condition="'$(OS)' == 'Windows_NT' and '$(IcsBypassLinkerProbe)' == 'true' and '$(ObjCopyName)' == ''">cmd</ObjCopyName>
+  </PropertyGroup>
+
+
+  <Target Name="IcsExportCSharpObjectAndOptionalNuttxBuild"
+        BeforeTargets="LinkNative"
+        DependsOnTargets="IlcCompile"
+        Condition="'$(PublishAot)' == 'true' and '$(CSharpObjectFilePath)' != '' and Exists('$(CSharpObjectFilePath)')">
+    <Message Text="CSharpObjectFilePath exists -> copy $(NativeObject) to $(CSharpObjectFilePath)\$(TargetName)$(NativeObjectExt) and skip native linking." Importance="high" />
+    <MakeDir Directories="$(CSharpObjectFilePath)" />
+    <Copy SourceFiles="$(NativeObject)"
+          DestinationFiles="$(CSharpObjectFilePath)\$(TargetName)$(NativeObjectExt)"
+          SkipUnchangedFiles="false"
+          Condition="Exists('$(NativeObject)')" />
+    <PropertyGroup>
+      <_SkipNativeLink>true</_SkipNativeLink>
+      <NativeBinary>$(NativeObject)</NativeBinary>
+    </PropertyGroup>
+
+    <Exec Condition=" '$(_NuttxRootKernelPath)' != '' and Exists('$(_NuttxRootKernelPath)') "
+          Command="$(BuildNuttxCommand)"
+          WorkingDirectory="$(_NuttxRootKernelPath)" />
+  </Target>
+
+  <Target Name="IcsLinkWithSdkTemplate"
+        BeforeTargets="LinkNative"
+        DependsOnTargets="IlcCompile"
+        Condition="'$(PublishAot)' == 'true' and '$(IcsCSharpSdk)' != '' and Exists('$(_IcsSdkLinkTemplate)') and '$(CSharpObjectFilePath)' == ''">
+    <Message Text="IcsCSharpSdk detected -> copy $(NativeObject) to output dir and skip native linking." Importance="high" />
+    <PropertyGroup>
+      <_IcsSdkObjectPath Condition="'$(_IcsSdkObjectPath)' == ''">$([System.IO.Path]::GetFullPath('$(NativeObject)'))</_IcsSdkObjectPath>
+      <_IcsSdkOutputDir Condition="'$(_IcsSdkOutputDir)' == '' and '$(PublishDir)' != ''">$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\$(PublishDir)'))</_IcsSdkOutputDir>
+      <_IcsSdkOutputDir Condition="'$(_IcsSdkOutputDir)' == ''">$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\$(OutputPath)'))</_IcsSdkOutputDir>
+    </PropertyGroup>
+    <PropertyGroup Condition="!HasTrailingSlash('$(_IcsSdkOutputDir)')">
+      <_IcsSdkOutputDir>$(_IcsSdkOutputDir)\</_IcsSdkOutputDir>
+    </PropertyGroup>
+
+    <PropertyGroup>
+      <_SkipNativeLink>true</_SkipNativeLink>
+      <NativeBinary>$(NativeObject)</NativeBinary>
+    </PropertyGroup>
+
+    <MakeDir Directories="$(_IcsSdkOutputDir)" />
+    <Copy SourceFiles="$(NativeObject)"
+          DestinationFiles="$(_IcsSdkOutputDir)$(TargetName)$(NativeObjectExt)"
+          SkipUnchangedFiles="false"
+          Condition="Exists('$(NativeObject)')" />
+
+    <PropertyGroup>
+      <_IcsSdkLinkCmd>$(_IcsSdkOutputDir)link.cmd</_IcsSdkLinkCmd>
+    </PropertyGroup>
+
+    <Exec Condition="'$(OS)' == 'Windows_NT'"
+          Command="powershell -NoProfile -ExecutionPolicy Bypass -Command &quot;$tpl='$(_IcsSdkLinkTemplate)'; $out='$(_IcsSdkLinkCmd)'; $sdk='$(IcsCSharpSdk)'.TrimEnd('\','/'); $obj='$(_IcsSdkObjectPath)'; $text=(Get-Content -Raw $tpl) -replace '__ICS_SDK_ROOT__', $sdk -replace '__ICS_CSHARP_OBJECT_PATH__', ('&quot;' + $obj + '&quot;'); Set-Content -NoNewline -Encoding Ascii -Path $out -Value $text&quot;" />
+
+    <Exec Condition="'$(OS)' == 'Windows_NT'"
+          Command="powershell -NoProfile -ExecutionPolicy Bypass -Command &quot;$env:PATH='$(_IcsGccBin);' + $env:PATH; &amp; '$(_IcsSdkLinkCmd)'; exit $LASTEXITCODE&quot;"
+          WorkingDirectory="$(_IcsSdkOutputDir)"
+          IgnoreExitCode="true"
+          ConsoleToMSBuild="true"
+          StandardOutputImportance="High"
+          StandardErrorImportance="High" />
+
+    <Error Condition="!Exists('$(_IcsSdkOutputDir)nuttx.elf')"
+           Text="link.cmd failed: nuttx.elf not generated. See output above." />
+  </Target>
+</Project>

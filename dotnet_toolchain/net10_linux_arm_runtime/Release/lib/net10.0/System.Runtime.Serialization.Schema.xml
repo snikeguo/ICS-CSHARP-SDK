@@ -1,0 +1,256 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>System.Runtime.Serialization.Schema</name>
+    </assembly>
+    <members>
+        <member name="T:System.Runtime.Serialization.ISerializationCodeDomSurrogateProvider">
+            <summary>
+            Represents a DataContract surrogate provider that is capable of modifying generated type code using <see cref="N:System.CodeDom"/>.
+            </summary>
+        </member>
+        <member name="M:System.Runtime.Serialization.ISerializationCodeDomSurrogateProvider.ProcessImportedType(System.CodeDom.CodeTypeDeclaration,System.CodeDom.CodeCompileUnit)">
+            <summary>
+            Processes the type that has been generated from the imported schema.
+            </summary>
+            <param name="typeDeclaration">A <see cref="T:System.CodeDom.CodeTypeDeclaration"/> to process that represents the type declaration generated during schema import.</param>
+            <param name="compileUnit">The <see cref="T:System.CodeDom.CodeCompileUnit"/> that contains the other code generated during schema import.</param>
+            <returns>A <see cref="T:System.CodeDom.CodeTypeDeclaration"/> that contains the processed type.</returns>
+        </member>
+        <member name="T:System.Runtime.Serialization.ImportOptions">
+            <summary>
+            Represents the options that can be set on an <see cref="T:System.Runtime.Serialization.XsdDataContractImporter"/>.
+            </summary>
+            <remarks>
+            The <see cref="T:System.Runtime.Serialization.XsdDataContractImporter"/> is used to generate code from XML schema using the .NET CodeDOM. To generate an XML schema from an assembly, use the <see cref="T:System.Runtime.Serialization.XsdDataContractExporter"/>.
+            </remarks>
+        </member>
+        <member name="P:System.Runtime.Serialization.ImportOptions.CodeProvider">
+            <summary>
+            Gets or sets a <see cref="T:System.CodeDom.Compiler.CodeDomProvider"/> instance that provides the means to check whether particular options for a target language are supported.
+            </summary>
+        </member>
+        <member name="P:System.Runtime.Serialization.ImportOptions.EnableDataBinding">
+            <summary>
+            Gets or sets a value that specifies whether types in generated code should implement the <see cref="T:System.ComponentModel.INotifyPropertyChanged"/> interface.
+            </summary>
+        </member>
+        <member name="P:System.Runtime.Serialization.ImportOptions.DataContractSurrogate">
+            <summary>
+            Gets or sets a data contract surrogate provider that can be used to modify the code generated during an import operation.
+            </summary>
+            <remarks>
+            The interface type for this option is ISerializationSurrogateProvider, but to take full advantage of the imported code modification
+            abilities, using an <see cref="T:System.Runtime.Serialization.ISerializationSurrogateProvider2"/>ISerializationSurrogateProvider2 that also implements <see cref="T:System.Runtime.Serialization.ISerializationCodeDomSurrogateProvider"/> is recommended.
+            </remarks>
+        </member>
+        <member name="P:System.Runtime.Serialization.ImportOptions.GenerateInternal">
+            <summary>
+            Gets or sets a value that specifies whether generated code will be marked internal or public.
+            </summary>
+        </member>
+        <member name="P:System.Runtime.Serialization.ImportOptions.GenerateSerializable">
+            <summary>
+            Gets or sets a value that specifies whether generated data contract classes will be marked with the <see cref="T:System.SerializableAttribute"/> attribute in addition to the <see cref="T:System.Runtime.Serialization.DataContractAttribute"/> attribute.
+            </summary>
+        </member>
+        <member name="P:System.Runtime.Serialization.ImportOptions.ImportXmlType">
+            <summary>
+            Gets or sets a value that determines whether all XML schema types, even those that do not conform to a data contract schema, will be imported.
+            </summary>
+        </member>
+        <member name="P:System.Runtime.Serialization.ImportOptions.Namespaces">
+            <summary>
+            Gets a dictionary that contains the mapping of data contract namespaces to the CLR namespaces that must be used to generate code during an import operation.
+            </summary>
+        </member>
+        <member name="P:System.Runtime.Serialization.ImportOptions.ReferencedCollectionTypes">
+            <summary>
+            Gets a collection of types that represents data contract collections that should be referenced when generating code for collections, such as lists or dictionaries of items.
+            </summary>
+        </member>
+        <member name="P:System.Runtime.Serialization.ImportOptions.ReferencedTypes">
+            <summary>
+            Gets a <see cref="T:System.Collections.Generic.IList`1"/> containing types referenced in generated code.
+            </summary>
+        </member>
+        <member name="T:System.Runtime.Serialization.XsdDataContractImporter">
+             <summary>
+             Allows the transformation of a set of XML schema files (.xsd) into common language runtime (CLR) types.
+             </summary>
+             <remarks>
+             Use the <see cref="T:System.Runtime.Serialization.XsdDataContractImporter"/> if you are creating a Web service that must interoperate with an existing
+             Web service, or to create data contract types from XML schemas. <see cref="T:System.Runtime.Serialization.XsdDataContractImporter"/> will transform a
+             set of XML schemas and create the .NET Framework types that represent the data contract in a selected programming language.
+             To create the code, use the classes in the <see cref="N:System.CodeDom"/> namespace.
+            
+             Conversely, use the <see cref="T:System.Runtime.Serialization.XsdDataContractExporter"/> class when you have created a Web service that incorporates
+             data represented by CLR types and when you need to export XML schemas for each data type to be consumed by other Web
+             services.That is, <see cref="T:System.Runtime.Serialization.XsdDataContractExporter"/> transforms a set of CLR types into a set of XML schemas.
+             </remarks>
+        </member>
+        <member name="M:System.Runtime.Serialization.XsdDataContractImporter.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:System.Runtime.Serialization.XsdDataContractImporter"/> class.
+            </summary>
+        </member>
+        <member name="M:System.Runtime.Serialization.XsdDataContractImporter.#ctor(System.CodeDom.CodeCompileUnit)">
+            <summary>
+            Initializes a new instance of the <see cref="T:System.Runtime.Serialization.XsdDataContractImporter"/> class with the <see cref="T:System.CodeDom.CodeCompileUnit"/> that will be used to generate CLR code.
+            </summary>
+            <param name="codeCompileUnit">The <see cref="T:System.CodeDom.CodeCompileUnit"/> that will be used to store the code.</param>
+        </member>
+        <member name="P:System.Runtime.Serialization.XsdDataContractImporter.Options">
+            <summary>
+            Gets or sets an <see cref="T:System.Runtime.Serialization.ImportOptions"/> that contains settable options for the import operation.
+            </summary>
+        </member>
+        <member name="P:System.Runtime.Serialization.XsdDataContractImporter.CodeCompileUnit">
+            <summary>
+            Gets a <see cref="T:System.CodeDom.CodeCompileUnit"/> used for storing the CLR types generated.
+            </summary>
+        </member>
+        <member name="M:System.Runtime.Serialization.XsdDataContractImporter.Import(System.Xml.Schema.XmlSchemaSet)">
+            <summary>
+            Transforms the specified set of XML schemas contained in an <see cref="T:System.Xml.Schema.XmlSchemaSet"/> into a <see cref="T:System.CodeDom.CodeCompileUnit"/>.
+            </summary>
+            <param name="schemas">A <see cref="T:System.Xml.Schema.XmlSchemaSet"/> that contains the schema representations to generate CLR types for.</param>
+        </member>
+        <member name="M:System.Runtime.Serialization.XsdDataContractImporter.Import(System.Xml.Schema.XmlSchemaSet,System.Collections.Generic.ICollection{System.Xml.XmlQualifiedName})">
+            <summary>
+            Transforms the specified set of schema types contained in an <see cref="T:System.Xml.Schema.XmlSchemaSet"/> into CLR types generated into a <see cref="T:System.CodeDom.CodeCompileUnit"/>.
+            </summary>
+            <param name="schemas">A <see cref="T:System.Xml.Schema.XmlSchemaSet"/> that contains the schema representations.</param>
+            <param name="typeNames">The set of schema types to import.</param>
+        </member>
+        <member name="M:System.Runtime.Serialization.XsdDataContractImporter.Import(System.Xml.Schema.XmlSchemaSet,System.Xml.XmlQualifiedName)">
+            <summary>
+            Transforms the specified XML schema type contained in an <see cref="T:System.Xml.Schema.XmlSchemaSet"/> into a <see cref="T:System.CodeDom.CodeCompileUnit"/>.
+            </summary>
+            <param name="schemas">A <see cref="T:System.Xml.Schema.XmlSchemaSet"/> that contains the schema representations.</param>
+            <param name="typeName">A <see cref="T:System.Xml.XmlQualifiedName"/> that represents a specific schema type to import.</param>
+        </member>
+        <member name="M:System.Runtime.Serialization.XsdDataContractImporter.Import(System.Xml.Schema.XmlSchemaSet,System.Xml.Schema.XmlSchemaElement)">
+            <summary>
+            Transforms the specified schema element in the set of specified XML schemas into a <see cref="T:System.CodeDom.CodeCompileUnit"/> and
+            returns an <see cref="T:System.Xml.XmlQualifiedName"/> that represents the data contract name for the specified element.
+            </summary>
+            <param name="schemas">An <see cref="T:System.Xml.Schema.XmlSchemaSet"/> that contains the schemas to transform.</param>
+            <param name="element">An <see cref="T:System.Xml.Schema.XmlSchemaElement"/> that represents the specific schema element to transform.</param>
+            <returns>An <see cref="T:System.Xml.XmlQualifiedName"/> that represents the specified element.</returns>
+        </member>
+        <member name="M:System.Runtime.Serialization.XsdDataContractImporter.CanImport(System.Xml.Schema.XmlSchemaSet)">
+            <summary>
+            Gets a value that indicates whether the schemas contained in an <see cref="T:System.Xml.Schema.XmlSchemaSet"/> can be transformed into a <see cref="T:System.CodeDom.CodeCompileUnit"/>.
+            </summary>
+            <param name="schemas">A <see cref="T:System.Xml.Schema.XmlSchemaSet"/> that contains the schemas to transform.</param>
+            <returns><see langword="true" /> if the schemas can be transformed to data contract types; otherwise, <see langword="false" />.</returns>
+        </member>
+        <member name="M:System.Runtime.Serialization.XsdDataContractImporter.CanImport(System.Xml.Schema.XmlSchemaSet,System.Collections.Generic.ICollection{System.Xml.XmlQualifiedName})">
+            <summary>
+            Gets a value that indicates whether the specified set of types contained in an <see cref="T:System.Xml.Schema.XmlSchemaSet"/> can be transformed into CLR types generated into a <see cref="T:System.CodeDom.CodeCompileUnit"/>.
+            </summary>
+            <param name="schemas">The schemas to transform.</param>
+            <param name="typeNames">The set of schema types to import.</param>
+            <returns><see langword="true" /> if the schemas can be transformed; otherwise, <see langword="false" />.</returns>
+        </member>
+        <member name="M:System.Runtime.Serialization.XsdDataContractImporter.CanImport(System.Xml.Schema.XmlSchemaSet,System.Xml.XmlQualifiedName)">
+            <summary>
+            Gets a value that indicates whether the schemas contained in an <see cref="T:System.Xml.Schema.XmlSchemaSet"/> can be transformed into a <see cref="T:System.CodeDom.CodeCompileUnit"/>.
+            </summary>
+            <param name="schemas">The schema representations.</param>
+            <param name="typeName">The names of the schema types that need to be imported from the <see cref="T:System.Xml.Schema.XmlSchemaSet"/>.</param>
+            <returns><see langword="true" /> if the schemas can be transformed to data contract types; otherwise, <see langword="false" />.</returns>
+        </member>
+        <member name="M:System.Runtime.Serialization.XsdDataContractImporter.CanImport(System.Xml.Schema.XmlSchemaSet,System.Xml.Schema.XmlSchemaElement)">
+            <summary>
+            Gets a value that indicates whether a specific schema element contained in an <see cref="T:System.Xml.Schema.XmlSchemaSet"/> can be imported.
+            </summary>
+            <param name="schemas">An <see cref="T:System.Xml.Schema.XmlSchemaSet"/> to import.</param>
+            <param name="element">A specific <see cref="T:System.Xml.Schema.XmlSchemaElement"/> to check in the set of schemas.</param>
+            <returns><see langword="true" /> if the element can be imported; otherwise, <see langword="false" />.</returns>
+        </member>
+        <member name="M:System.Runtime.Serialization.XsdDataContractImporter.GetCodeTypeReference(System.Xml.XmlQualifiedName)">
+            <summary>
+            Returns a <see cref="T:System.CodeDom.CodeTypeReference"/> to the CLR type generated for the schema type with the specified <see cref="T:System.Xml.XmlQualifiedName"/>.
+            </summary>
+            <param name="typeName">The <see cref="T:System.Xml.XmlQualifiedName"/> that specifies the schema type to look up.</param>
+            <returns>A <see cref="T:System.CodeDom.CodeTypeReference"/> reference to the CLR type generated for the schema type with the typeName specified.</returns>
+        </member>
+        <member name="M:System.Runtime.Serialization.XsdDataContractImporter.GetCodeTypeReference(System.Xml.XmlQualifiedName,System.Xml.Schema.XmlSchemaElement)">
+            <summary>
+            Returns a <see cref="T:System.CodeDom.CodeTypeReference"/> for the specified XML qualified element and schema element.
+            </summary>
+            <param name="typeName">An <see cref="T:System.Xml.XmlQualifiedName"/> that specifies the XML qualified name of the schema type to look up.</param>
+            <param name="element">An <see cref="T:System.Xml.Schema.XmlSchemaElement"/> that specifies an element in an XML schema.</param>
+            <returns>A <see cref="T:System.CodeDom.CodeTypeReference"/> that represents the type that was generated for the specified schema type.</returns>
+        </member>
+        <member name="M:System.Runtime.Serialization.XsdDataContractImporter.GetKnownTypeReferences(System.Xml.XmlQualifiedName)">
+            <summary>
+            Returns a list of <see cref="T:System.CodeDom.CodeTypeReference"/> objects that represents the known types generated when generating code for the specified schema type.
+            </summary>
+            <param name="typeName">An <see cref="T:System.Xml.XmlQualifiedName"/> that represents the schema type to look up known types for.</param>
+            <returns>A collection of type <see cref="T:System.CodeDom.CodeTypeReference"/>.</returns>
+        </member>
+        <member name="P:System.SR.AnnotationAttributeNotFound">
+            <summary>Invalid '{0}' annotation in type '{1}' from namespace '{2}'. Attribute '{3}' not present.</summary>
+        </member>
+        <member name="P:System.SR.CannotExportNullAssembly">
+            <summary>Cannot export null assembly provided via '{0}' parameter.</summary>
+        </member>
+        <member name="P:System.SR.CannotExportNullKnownType">
+            <summary>Cannot export null type provided via KnownTypesCollection.</summary>
+        </member>
+        <member name="P:System.SR.CannotExportNullType">
+            <summary>Cannot export null type provided via '{0}' parameter.</summary>
+        </member>
+        <member name="P:System.SR.CannotSetMembersForReferencedType">
+            <summary>Existing type '{0}' specified via the referenced types collection has been referenced in the generated code. Members cannot be added for this type since it cannot be modified.</summary>
+        </member>
+        <member name="P:System.SR.CannotSetNamespaceForReferencedType">
+            <summary>Existing type '{0}' specified via the referenced types collection has been referenced in the generated code. Cannot set namespace for this type since it cannot be modified.</summary>
+        </member>
+        <member name="P:System.SR.GenericTypeNotExportable">
+            <summary>Type '{0}' cannot be exported as a schema type because it is an open generic type. You can only export a generic type if all its generic parameter types are actual types.</summary>
+        </member>
+        <member name="P:System.SR.TypeHasNotBeenImported">
+            <summary>Type '{0}' from namespace '{1}' has not been imported from schema. Consider first importing this type by calling one of the Import methods on XsdDataContractImporter.</summary>
+        </member>
+        <member name="P:System.SR.CannotComputeUniqueName">
+            <summary>A unique name cannot be computed for '{0}' because there are already Int32.MaxValue types of with the same name.</summary>
+        </member>
+        <member name="P:System.SR.CannotDeriveFromSealedReferenceType">
+            <summary>Type with data contract name '{0}' in namespace '{1}' cannot be imported. Cannot derive from sealed referenced type '{2}'.</summary>
+        </member>
+        <member name="P:System.SR.CannotUseGenericTypeAsBase">
+            <summary>Collection type cannot be generated for type '{0}' from namespace '{1}'. Cannot use a generic list type as a base type because the language does not support generic type references.</summary>
+        </member>
+        <member name="P:System.SR.CircularTypeReference">
+            <summary>It contains a circular reference for type '{0}' from namespace '{1}'.</summary>
+        </member>
+        <member name="P:System.SR.CLRNamespaceMappedMultipleTimes">
+            <summary>CLR namespace '{2}' has already been mapped to data contract namespace '{0}'. It cannot be mapped to another data contract namespace '{1}'.</summary>
+        </member>
+        <member name="P:System.SR.InvalidClrNameGeneratedForISerializable">
+            <summary>ISerializable type with data contract name '{0}' in namespace '{1}' cannot be imported. The data contract name cannot be customized for ISerializable type and the generated name '{2}' does not match the expected name '{0}'. Check if the required name has b ...</summary>
+        </member>
+        <member name="P:System.SR.InvalidClrNamespaceGeneratedForISerializable">
+            <summary>ISerializable type with data contract name '{0}' in namespace '{1}' cannot be imported. The data contract namespace cannot be customized for ISerializable types and the generated namespace '{3}' does not match the required CLR namespace '{2}'. Check if the ...</summary>
+        </member>
+        <member name="P:System.SR.ReferencedBaseTypeDoesNotExist">
+            <summary>Collection type cannot be generated for type '{0}' from namespace '{1}'. Rename the type to '{2}' in namespace '{3}' or reference an existing collection type that implements '{4}' or '{5}' which can be used as a base type for the generated collection.</summary>
+        </member>
+        <member name="P:System.SR.ReferencedTypeDoesNotMatch">
+            <summary>Referenced type '{0}' with data contract name '{1}' in namespace '{2}' cannot be used since it does not match imported DataContract. Need to exclude this type from referenced types.</summary>
+        </member>
+        <member name="P:System.SR.TypeCannotBeImported">
+            <summary>Type '{0}' in namespace '{1}' cannot be imported. {2}</summary>
+        </member>
+        <member name="P:System.SR.TypeMustBeIXmlSerializable">
+            <summary>Schema type '{2}' in namespace '{3}' must be imported as an XML type. Type '{0}' cannot be mapped to this schema type because it does not implement '{1}'.  Consider not adding type '{0}' to the list of referenced types or changing it to implement '{1}'.</summary>
+        </member>
+        <member name="P:System.SR.UnexpectedContractType">
+            <summary>An internal error has occurred. Unexpected contract type '{0}' for type '{1}' encountered.</summary>
+        </member>
+    </members>
+</doc>

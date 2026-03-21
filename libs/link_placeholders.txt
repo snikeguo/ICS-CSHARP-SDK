@@ -1,0 +1,16 @@
+链接脚本占位符（MSBuild 可用 $(IcsCSharpSdk) 替换 __ICS_SDK_ROOT__）
+
+__ICS_SDK_ROOT__
+  ICS SDK 根目录（本仓库中即包含 libs、xpack-arm-none-eabi-gcc-* 的那一层）。
+  展开后应满足：
+  - {根}/libs/ 与 copy_libs 输出一致（arch、apps、flash_app_flat.ld.tmp 等）；
+  - {根}/xpack-arm-none-eabi-gcc-*/ 为随包 arm-none-eabi-gcc（与 Ninja 中路径对应）；
+  - {根}/aot_runtime/build_flat/*.a 为 NativeAot 运行时静态库（打包时放入该相对路径）。
+
+__ICS_CSHARP_OBJECT_PATH__
+  仅此项为客户机路径：ILC 生成的 .o 完整路径。
+  .config 中 CONFIG_ICS_NATIVEAOT_CSHARP_OBJECT_FILE_NAME 当前为: GpioForCSharpDriver.o（仅作文件名参考）。
+
+生成文件:
+  link_template.env   含 LINK_CMD_GCC=
+  link_template.cmd / .sh   先全局替换上述占位符再执行
