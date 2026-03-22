@@ -8,10 +8,10 @@
 
 - Windows 操作系统
 - [.NET 10 SDK](https://dotnet.microsoft.com/zh-cn/download/dotnet/10.0)
-
+- [ICS C# SDK](https://gitee.com/ICS_PUBLIC/ics-csharp-sdk)
 ---
 
-## 第一步：安装 SDK
+## 第一步： ICS C# SDK
 
 下载 SDK 后，**以管理员身份**在 SDK 目录下运行 `PublishIcsCsharpSdk.exe`：
 
