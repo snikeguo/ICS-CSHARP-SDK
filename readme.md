@@ -7,7 +7,7 @@
 ## 环境要求
 
 - Windows 操作系统
-- [.NET 10 SDK](https://dotnet.microsoft.com/download)
+- [.NET 10 SDK](https://dotnet.microsoft.com/zh-cn/download/dotnet/10.0)
 
 ---
 
