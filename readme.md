@@ -13,15 +13,7 @@
 
 ## 第一步： ICS C# SDK
 
-下载 SDK 后，**以管理员身份**在 SDK 目录下运行 `PublishIcsCsharpSdk.exe`：
-
-```
-# 右键 → 以管理员身份运行
-PublishIcsCsharpSdk.exe
-```
-
-> ⚠️ 必须使用管理员权限，否则安装可能失败。
-
+下载 SDK 后，SDK 目录下运行 `python.exe .\publish_ics_csharp_sdk.py`：
 ---
 
 ## 第二步：创建用户工程
