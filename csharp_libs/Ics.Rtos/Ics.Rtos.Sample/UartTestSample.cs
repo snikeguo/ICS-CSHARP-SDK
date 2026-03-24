@@ -19,7 +19,7 @@ namespace Ics.Rtos.Sample
                 StopBits = UartStopBits.One,
                 Parity = UartParity.None,
                 FlowControl = UartFlowControl.None,
-                RxBufferSize = 256
+                RxBufferSize = 4096
             };
 
             dev.EventReceived += evt =>
@@ -35,13 +35,6 @@ namespace Ics.Rtos.Sample
                         if (!string.IsNullOrWhiteSpace(text))
                         {
                             Console.WriteLine($"  RxText: {text}");
-                        }
-
-                        // Echo
-                        if (evt.RxData.Data.Length > 0)
-                        {
-                            var ok = dev.Send(evt.RxData.Data, 1000);
-                            Console.WriteLine(ok ? "  Echo sent." : "  Echo send failed.");
                         }
                     }
                     else if (evt.EventType == UartEventType.Error && evt.ErrorEvent != null)

@@ -9,7 +9,6 @@
 
     <!-- Source mode: derive ILC paths from NuttX app root if not explicitly set -->
     <_NuttxIlcBasePath Condition="'$(_NuttxIlcBasePath)' == '' and '$(NuttxRootAppPath)' != ''">$(NuttxRootAppPath)\ics\NativeAot\dotnet_toolchain\net10_linux_arm_runtime\Release</_NuttxIlcBasePath>
-    <_NuttxIlcBasePath Condition="'$(_NuttxIlcBasePath)' == '' and '$(_NuttxRootKernelPath)' != ''">$(_NuttxRootKernelPath)\ics\NativeAot\dotnet_toolchain\net10_linux_arm_runtime\Release</_NuttxIlcBasePath>
     <IlcFrameworkNativePath Condition="'$(IlcFrameworkNativePath)' == '' and '$(_NuttxIlcBasePath)' != ''">$(_NuttxIlcBasePath)\native</IlcFrameworkNativePath>
     <IlcFrameworkPath Condition="'$(IlcFrameworkPath)' == '' and '$(_NuttxIlcBasePath)' != ''">$(_NuttxIlcBasePath)\lib</IlcFrameworkPath>
     <IlcSdkPath Condition="'$(IlcSdkPath)' == '' and '$(IlcFrameworkNativePath)' != ''">$(IlcFrameworkNativePath)</IlcSdkPath>
@@ -29,14 +28,13 @@
     <CppLinker Condition="'$(CppLinker)' == '' and '$(CppCompilerAndLinker)' != ''">$(CppCompilerAndLinker)</CppLinker>
     <ObjCopyName Condition="'$(ObjCopyName)' == '' and '$(_IcsGccBin)' != ''">arm-none-eabi-objcopy.exe</ObjCopyName>
     <_CommandProbe Condition="'$(OS)' == 'Windows_NT' and '$(_IcsGccBin)' != ''">cmd /c &quot;set PATH=$(_IcsGccBin);%PATH%&amp;&amp; where /Q&quot;</_CommandProbe>
-    <_SkipNativeLink Condition="'$(PublishAot)' == 'true' and '$(CSharpObjectFilePath)' != ''">true</_SkipNativeLink>
-    <_SkipNativeLink Condition="'$(IcsCSharpSdk)' != '' and '$(CSharpObjectFilePath)' == ''">true</_SkipNativeLink>
+    <_SkipNativeLink Condition="'$(IcsCSharpSdk)' != '' or ('$(PublishAot)' == 'true' and '$(CSharpObjectFilePath)' != '')">true</_SkipNativeLink>
 
     <!-- When we will skip native linking, bypass linker probe on Windows -->
     <IcsBypassLinkerProbe Condition="'$(IcsBypassLinkerProbe)' == '' and '$(PublishAot)' == 'true' and ( '$(CSharpObjectFilePath)' != '' or '$(IcsCSharpSdk)' != '' )">true</IcsBypassLinkerProbe>
-    <CppCompilerAndLinker Condition="'$(OS)' == 'Windows_NT' and '$(IcsBypassLinkerProbe)' == 'true' and '$(CppCompilerAndLinker)' == ''">cmd</CppCompilerAndLinker>
-    <CppLinker Condition="'$(OS)' == 'Windows_NT' and '$(IcsBypassLinkerProbe)' == 'true' and '$(CppLinker)' == ''">cmd</CppLinker>
-    <ObjCopyName Condition="'$(OS)' == 'Windows_NT' and '$(IcsBypassLinkerProbe)' == 'true' and '$(ObjCopyName)' == ''">cmd</ObjCopyName>
+    <CppCompilerAndLinker Condition="'$(OS)' == 'Windows_NT' and '$(IcsBypassLinkerProbe)' == 'true'">cmd</CppCompilerAndLinker>
+    <CppLinker Condition="'$(OS)' == 'Windows_NT' and '$(IcsBypassLinkerProbe)' == 'true'">cmd</CppLinker>
+    <ObjCopyName Condition="'$(OS)' == 'Windows_NT' and '$(IcsBypassLinkerProbe)' == 'true'">cmd</ObjCopyName>
   </PropertyGroup>
 
 
@@ -51,7 +49,6 @@
           SkipUnchangedFiles="false"
           Condition="Exists('$(NativeObject)')" />
     <PropertyGroup>
-      <_SkipNativeLink>true</_SkipNativeLink>
       <NativeBinary>$(NativeObject)</NativeBinary>
     </PropertyGroup>
 
@@ -75,7 +72,6 @@
     </PropertyGroup>
 
     <PropertyGroup>
-      <_SkipNativeLink>true</_SkipNativeLink>
       <NativeBinary>$(NativeObject)</NativeBinary>
     </PropertyGroup>
 

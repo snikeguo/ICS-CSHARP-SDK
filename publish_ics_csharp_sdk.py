@@ -119,7 +119,8 @@ def patch_targets_file(path: Path) -> bool:
     if content == original:
         return False
 
-    path.write_text(content, encoding=encoding, newline="")
+    with open(path, "w", encoding=encoding, newline="") as f:
+        f.write(content)
     return True
 
 
