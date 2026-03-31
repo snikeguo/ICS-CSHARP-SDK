@@ -1,146 +1,71 @@
 /****************************************************************************
- * include/nuttx/net/ethernet.h
+ * include/net/ethernet.h
  *
- * SPDX-License-Identifier: BSD-3-Clause
- * SPDX-FileCopyrightText: 2007, 2009-2012, 2015 Gregory Nutt. All rights
- *                         reserved.
- * SPDX-FileCopyrightText: 2001-2003, Adam Dunkels. All rights reserved.
- * SPDX-FileContributor: Gregory Nutt <gnutt@nuttx.org>
- * SPDX-FileContributor: Adam Dunkels <adam@dunkels.com>
+ * SPDX-License-Identifier: Apache-2.0
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.  The
+ * ASF licenses this file to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance with the
+ * License.  You may obtain a copy of the License at
  *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote
- *    products derived from this software without specific prior
- *    written permission.
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
- * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
  *
  ****************************************************************************/
 
-#ifndef __INCLUDE_NUTTX_NET_ETHERNET_H
-#define __INCLUDE_NUTTX_NET_ETHERNET_H
+#ifndef __INCLUDE_NET_ETHERNET_H
+#define __INCLUDE_NET_ETHERNET_H
 
 /****************************************************************************
  * Included Files
  ****************************************************************************/
 
-#include <nuttx/config.h>
 #include <stdint.h>
-#include <net/ethernet.h>
 
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
 
-/* Recognized values of the type bytes in the Ethernet header */
+#define ETHER_ADDR_LEN  6
 
-#define ETHTYPE_ARP      ETHERTYPE_ARP  /* Address resolution protocol */
-#define ETHTYPE_IP       ETHERTYPE_IP   /* IP protocol */
-#define ETHTYPE_IP6      ETHERTYPE_IPV6 /* IP protocol version 6 */
-
-/* Tag protocol identifier (TPID) of 0x8100 identifies the frame as an
- * IEEE 802.1Q-tagged frame.  This field is located at the same position as
- * the Ethernet type field in untagged frames and is thus used to
- * distinguish the frame from untagged frames.
- */
-
-#define TPID_8021QVLAN   ETHERTYPE_VLAN
-
-/* These are some control information associated with QVLAN tagged
- * Ethernet packets.
- */
-
-#define VLAN_PRIO_MASK   0xe000 /* Priority Code Point */
-#define VLAN_PRIO_SHIFT  13
-#define VLAN_CFI_MASK    0x1000 /* Canonical Format Indicator / Drop Eligible Indicator */
-#define VLAN_VID_MASK    0x0fff /* VLAN Identifier */
-#define VLAN_N_VID       4096
-
-/* These are some of the types associated with QVLAN tagged
- * Ethernet packets.
- */
-
-#define ETHTYPE_AVBTP    0x22f0 /* Audio/Video bridging type */
-
-/* Size of the Ethernet headers */
-
-#define ETH_HDRLEN       14     /* Header size: 2*6 + 2 */
-#define ETH_8021Q_HDRLEN 18     /* Header size: 2*6 + 4 + 2 */
+/* Ethernet protocol ID's */
+#define ETHERTYPE_PUP      0x0200    /* Xerox PUP */
+#define ETHERTYPE_SPRITE   0x0500    /* Sprite */
+#define ETHERTYPE_IP       0x0800    /* IP */
+#define ETHERTYPE_ARP      0x0806    /* Address resolution */
+#define ETHERTYPE_REVARP   0x8035    /* Reverse ARP */
+#define ETHERTYPE_AT       0x809B    /* AppleTalk protocol */
+#define ETHERTYPE_AARP     0x80F3    /* AppleTalk ARP */
+#define ETHERTYPE_VLAN     0x8100    /* IEEE 802.1Q VLAN tagging */
+#define ETHERTYPE_IPX      0x8137    /* IPX */
+#define ETHERTYPE_IPV6     0x86dd    /* IP protocol version 6 */
+#define ETHERTYPE_LOOPBACK 0x9000    /* used to test interfaces */
 
 /****************************************************************************
- * Public Types
+ * Public Type Definitions
  ****************************************************************************/
 
-/* The Ethernet header -- 14 bytes. The first two fields are type 'struct
- * ether_addr but are represented as a simple byte array here because
- * some compilers refuse to pack 6 byte structures.
- */
-
-struct eth_hdr_s
+struct ether_addr
 {
-  uint8_t  dest[6]; /* Ethernet destination address (6 bytes) */
-  uint8_t  src[6];  /* Ethernet source address (6 bytes) */
-  uint16_t type;    /* Type code (2 bytes) */
+  uint8_t ether_addr_octet[6];            /* 48-bit Ethernet address */
 };
 
-/* IEEE 802.1Q adds a 32-bit field between the source MAC address and the
- * type fields of the original Ethernet header.  Two bytes are used for the
- * tag protocol identifier (TPID), the other two bytes for tag control
- * information  TCI).  The TCI field is further divided into PCP, DEI, and
- * VID.
- */
-
-struct eth_8021qhdr_s
+struct ether_header
 {
-  uint8_t  dest[6]; /* Ethernet destination address (6 bytes) */
-  uint8_t  src[6];  /* Ethernet source address (6 bytes) */
-  uint16_t tpid;    /* TCI: Tag protocol identifier (2 bytes) */
-  uint16_t tci;     /* TCI: Tag control information: PCP, DEI, VID (2 bytes) */
-  uint16_t type;    /* Type code (2 bytes) */
+  uint8_t  ether_dhost[ETHER_ADDR_LEN];   /* Destination Ethernet address */
+  uint8_t  ether_shost[ETHER_ADDR_LEN];   /* Source Ethernet address */
+  uint16_t ether_type;                    /* Ethernet packet type */
 };
-
-/****************************************************************************
- * Public Data
- ****************************************************************************/
-
-#ifdef __cplusplus
-#define EXTERN extern "C"
-extern "C"
-{
-#else
-#define EXTERN extern
-#endif
-
-#if defined(CONFIG_NET_ICMPv6_AUTOCONF) || defined(CONFIG_NET_ICMPv6_ROUTER)
-EXTERN const struct ether_addr g_ipv6_ethallnodes;    /* All link local nodes */
-EXTERN const struct ether_addr g_ipv6_ethallrouters;  /* All link local routers */
-#endif
 
 /****************************************************************************
  * Public Function Prototypes
  ****************************************************************************/
 
-#undef EXTERN
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* __INCLUDE_NUTTX_NET_ETHERNET_H */
+#endif /* __INCLUDE_NET_ETHERNET_H */

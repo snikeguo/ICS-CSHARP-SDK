@@ -1,5 +1,5 @@
 /****************************************************************************
- * include/nuttx/signal.h
+ * include/signal.h
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -20,684 +20,480 @@
  *
  ****************************************************************************/
 
-#ifndef __INCLUDE_NUTTX_SIGNAL_H
-#define __INCLUDE_NUTTX_SIGNAL_H
+#ifndef __INCLUDE_SIGNAL_H
+#define __INCLUDE_SIGNAL_H
 
 /****************************************************************************
  * Included Files
  ****************************************************************************/
 
 #include <nuttx/config.h>
+#include <nuttx/compiler.h>
 
-#include <sys/types.h>
-#include <stdbool.h>
-#include <signal.h>
-
-#include <nuttx/wqueue.h>
-#include <nuttx/sched.h>
+#include <stdint.h>
+#include <time.h>
 
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
 
-#ifdef CONFIG_SIG_EVTHREAD
-  #define sigwork_init(work) memset(work, 0, sizeof(*work));
-#else
-  #define sigwork_init(work) (void)(work)
-#endif
+/* Signal set management definitions and macros. */
 
-/* Internal signal set definitions */
+#define MIN_SIGNO       1               /* Lowest valid signal number */
+#define MAX_SIGNO       63              /* Highest valid signal number */
 
-#define _NO_SIGNALS     ((uint32_t)0x00000000)
-#define _ALL_SIGNALS    ((uint32_t)0xffffffff)
-#define _SIGSET_NDX(s)  ((s) >> 5)    /* Get array index from signal number */
-#define _SIGSET_BIT(s)  ((s) & 0x1f)  /* Get bit number from signal number */
-#define _SIGNO2SET(s)   ((uint32_t)1 << _SIGSET_BIT(s))
+/* Definitions for "standard" signals */
 
-/* Helper macros for printing signal sets. */
+#define SIGSTDMIN       1               /* First standard signal number */
+#define SIGSTDMAX       31              /* Last standard signal number */
 
-#define SIGSET_FMT     "%08" PRIx32 "%08" PRIx32
-#define SIGSET_ELEM(s) (s)->_elem[1], (s)->_elem[0]
+/* Definitions for "real time" signals */
 
-/****************************************************************************
- * Public Type Definitions
- ****************************************************************************/
+#define SIGRTMIN        (SIGSTDMAX + 1) /* First real time signal */
+#define SIGRTMAX        MAX_SIGNO       /* Last real time signal */
+#define _NSIG           (MAX_SIGNO + 1) /* Biggest signal number + 1 */
+#define NSIG            _NSIG           /* _NSIG variant commonly used */
 
-struct sigwork_s
-{
-  struct work_s work;           /* Work queue structure */
-  union sigval value;           /* Data passed with notification */
-  sigev_notify_function_t func; /* Notification function */
-};
-
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
-/****************************************************************************
- * Public Function Prototypes
- ****************************************************************************/
-
-/* Most internal nxsig_* interfaces are not available in the user space in
- * PROTECTED and KERNEL builds.  In that context, the application signal
- * interfaces must be used.  The differences between the two sets of
- * interfaces are:  (1) the nxsig_* interfaces do not cause cancellation
- * points and (2) they do not modify the errno variable.
- *
- * This is only important when compiling libraries (libc or libnx) that are
- * used both by the OS (libkc.a and libknx.a) or by the applications
- * (libc.a and libnx.a).  In that case, the correct interface must be
- * used for the build context.
- *
- * REVISIT:  In the flat build, the same functions must be used both by
- * the OS and by applications.  We have to use the normal user functions
- * in this case or we will fail to set the errno or fail to create the
- * cancellation point.
- *
- * The interfaces sigtimedwait(), sigwait(), sigwaitinfo(), sleep(),
- * nanosleep(), and usleep()  are cancellation points.
- *
- * REVISIT:  The fact that these interfaces are cancellation points is an
- * issue and may cause violations:  It use of these internally will cause
- * the calling function to become a cancellation points!
+/* sigset_t is represented as an array of 32-b unsigned integers.
+ * _SIGSET_NELEM is the allocated isze of the array
  */
 
-#if !defined(CONFIG_BUILD_FLAT) && defined(__KERNEL__)
-#  define _SIG_PROCMASK(h,s,o)  nxsig_procmask(h,s,o)
-#  define _SIG_SIGACTION(s,a,o) nxsig_action(s,a,o,false)
-#  define _SIG_QUEUE(p,s,v)     nxsig_queue(p,s,v)
-#  define _SIG_KILL(p,s)        nxsig_kill(p,s)
-#  define _SIG_WAITINFO(s,i)    nxsig_timedwait(s,i,NULL)
-#  define _SIG_NANOSLEEP(r,a)   nxsig_nanosleep(r,a)
-#  define _SIG_SLEEP(s)         nxsig_sleep(s)
-#  define _SIG_USLEEP(u)        nxsig_usleep(u)
-#  define _SIG_ERRNO(r)         (-(r))
-#  define _SIG_ERRVAL(r)        (r)
-#else
-#  define _SIG_PROCMASK(h,s,o)  sigprocmask(h,s,o)
-#  define _SIG_SIGACTION(s,a,o) sigaction(s,a,o)
-#  define _SIG_QUEUE(p,s,v)     sigqueue(p,s,v)
-#  define _SIG_KILL(p,s)        kill(p,s)
-#  define _SIG_WAITINFO(s,i)    sigwaitinfo(s,i)
-#  define _SIG_NANOSLEEP(r,a)   nanosleep(r,a)
-#  define _SIG_SLEEP(s)         sleep(s)
-#  define _SIG_USLEEP(u)        usleep(u)
-#  define _SIG_ERRNO(r)         errno
-#  define _SIG_ERRVAL(r)        (-errno)
+#define _SIGSET_NELEM   ((_NSIG + 31) >> 5)
+
+/* NuttX does not support all standard signal actions.  NuttX supports what
+ * are referred to as "real time" signals.  The default action of all NuttX
+ * signals is to simply ignore the signal.  Certain signals can be
+ * configured to support there default actions as indicated by NOTEs to the
+ * following table.
+ *
+ * This is not POSIX compliant behavior!  Per OpenGroup.org:  The following
+ * signals and default signal actions must be supported on all
+ * implementations:
+ *
+ *   ---------- ------- ----------------------------------------------------
+ *   Signal     Default Description
+ *   Name       Action
+ *   ---------- ------- ----------------------------------------------------
+ *   SIGABRT    A       Process abort signal
+ *   SIGALRM    T (1)   Alarm clock
+ *   SIGBUS     A       Access to an undefined portion of a memory object
+ *   SIGCHLD    I       Child process terminated, stopped
+ *                      (or continued XSI extension)
+ *   SIGCONT    C (2)   Continue executing, if stopped
+ *   SIGFPE     A       Erroneous arithmetic operation
+ *   SIGHUP     T       Hangup
+ *   SIGILL     A       Illegal instruction
+ *   SIGINT     T (3)   Terminal interrupt signal
+ *   SIGKILL    T (3)   Kill (cannot be caught or ignored)
+ *   SIGPIPE    T (7)   Write on a pipe with no one to read it
+ *   SIGQUIT    A       Terminal quit signal
+ *   SIGSEGV    A       Invalid memory reference
+ *   SIGSTOP    S (2)   Stop executing (cannot be caught or ignored)
+ *   SIGTERM    T       Termination signal
+ *   SIGTSTP    S (2)   Terminal stop signal
+ *   SIGTTIN    S       Background process attempting read
+ *   SIGTTOU    S       Background process attempting write
+ *   SIGUSR1    T (4)   User-defined signal 1
+ *   SIGUSR2    T (5)   User-defined signal 2
+ *   SIGPOLL    T (6)   Poll-able event (XSI extension)
+ *   SIGPROF    T       Profiling timer expired (XSI extension)
+ *   SIGSYS     A       Bad system call (XSI extension)
+ *   SIGTRAP    A       Trace/breakpoint trap (XSI extension)
+ *   SIGURG     I       High bandwidth data is available at a socket
+ *   SIGVTALRM  T       Virtual timer expired (XSI extension)
+ *   SIGXCPU    A       CPU time limit exceeded (XSI extension)
+ *   SIGXFSZ    A       File size limit exceeded (XSI extension)
+ *   ---------- ------- ----------------------------------------------------
+ *
+ * Where default action codes are:
+ *
+ * T  Abnormal termination of the process.  The process is terminated with
+ *    all the consequences of _exit() except that the status made available
+ *    to wait() and waitpid() indicates abnormal termination by the
+ *    specified signal.
+ * A  Abnormal termination of the process.  Additionally with the XSI
+ *    extension, implementation-defined abnormal termination actions, such
+ *    as creation of a core file, may occur.
+ * I  Ignore the signal.
+ * S  Stop the process.
+ * C  Continue the process, if it is stopped; otherwise, ignore the signal.
+ *
+ * NOTES:
+ * (1)  The default action can be enabled with CONFIG_SIG_SIGALRM_ACTION
+ * (2)  The default action can be enabled with CONFIG_SIG_SIGSTOP_ACTION
+ * (3)  The default action can be enabled with CONFIG_SIG_SIGKILL_ACTION
+ * (4)  The default action can be enabled with CONFIG_SIG_SIGUSR1_ACTION
+ * (5)  The default action can be enabled with CONFIG_SIG_SIGUSR2_ACTION
+ * (6)  The default action can be enabled with CONFIG_SIG_SIGPOLL_ACTION
+ * (7)  The default action can be enabled with CONFIG_SIG_SIGPIPE_ACTION
+ */
+
+/* A few of the real time signals are used within the OS.  They have
+ * default values that can be overridden from the configuration file. The
+ * rest are all standard or user real-time signals.
+ *
+ * The signal number zero is wasted for the most part.  It is a valid
+ * signal number, but has special meaning at many interfaces (e.g., Kill()).
+ *
+ * These are the semi-standard signal definitions:
+ */
+
+#define SIGHUP          1
+#define SIGINT          2
+#define SIGQUIT         3
+#define SIGILL          4
+#define SIGTRAP         5
+#define SIGABRT         6
+#define SIGBUS          7
+#define SIGFPE          8
+#define SIGKILL         9
+#define SIGUSR1         10  /* User signal 1 */
+#define SIGSEGV         11
+#define SIGUSR2         12  /* User signal 2 */
+#define SIGPIPE         13
+#define SIGALRM         14  /* Default signal used with POSIX timers (used only */
+                            /* no other signal is provided) */
+#define SIGTERM         15
+#define SIGCHLD         17
+#define SIGCONT         18
+#define SIGSTOP         19
+#define SIGTSTP         20
+#define SIGTTIN         21
+#define SIGTTOU         22
+#define SIGURG          23
+#define SIGXCPU         24
+#define SIGXFSZ         25
+#define SIGVTALRM       26
+#define SIGPROF         27
+#define SIGWINCH        28
+#define SIGPOLL         29
+
+#define SIGIO           SIGPOLL
+
+#define SIGSYS          31
+
+#define SIGIOT          SIGABRT
+
+/* sigprocmask() "how" definitions.
+ * Only one of the following can be specified:
+ */
+
+#define SIG_BLOCK       1  /* Block the given signals */
+#define SIG_UNBLOCK     2  /* Unblock the given signals */
+#define SIG_SETMASK     3  /* Set the signal mask to the current set */
+
+/* struct sigaction flag values */
+
+#define SA_NOCLDSTOP    (1 << 0) /* Do not generate SIGCHLD when
+                                  * children stop (ignored) */
+#define SA_SIGINFO      (1 << 1) /* Invoke the signal-catching function
+                                  * with 3 args instead of 1
+                                  * (always assumed) */
+#define SA_NOCLDWAIT    (1 << 2) /* If signo=SIGCHLD, exit status of child
+                                  * processes will be discarded */
+#define SA_ONSTACK      (1 << 3) /* Indicates that a registered stack_t
+                                  * will be used */
+#define SA_RESTART      (1 << 4) /* Flag to get restarting signals
+                                  * (which were the default long ago) */
+#define SA_NODEFER      (1 << 5) /* Prevents the current signal from
+                                  * being masked in the handler */
+#define SA_RESETHAND    (1 << 6) /* Clears the handler when the signal
+                                  * is delivered */
+#define SA_KERNELHAND   (1 << 7) /* Invoke the handler in kernel space directly */
+
+/* SA_NOMASK is a nonstandard synonym of SA_NODEFER */
+
+#define SA_NOMASK       SA_NODEFER
+
+/* These are the possible values of the siginfo si_code field */
+
+#define SI_USER         0  /* Signal sent from kill, raise, or abort */
+#define SI_QUEUE        1  /* Signal sent from sigqueue */
+#define SI_TIMER        2  /* Signal is result of timer expiration */
+#define SI_ASYNCIO      3  /* Signal is the result of asynch IO completion */
+#define SI_MESGQ        4  /* Signal generated by arrival of a message on an */
+                           /* empty message queue */
+#define CLD_EXITED      5  /* Child has exited (SIGCHLD only) */
+#define CLD_KILLED      6  /* Child was killed (SIGCHLD only) */
+#define CLD_DUMPED      7  /* Child terminated abnormally (SIGCHLD only) */
+#define CLD_TRAPPED     8  /* Traced child has trapped (SIGCHLD only) */
+#define CLD_STOPPED     9  /* Child has stopped (SIGCHLD only) */
+#define CLD_CONTINUED   10 /* Stopped child had continued (SIGCHLD only) */
+
+/* SIGILL si_codes */
+
+#define ILL_ILLOPC      1 /* Illegal opcode */
+#define ILL_ILLOPN      2 /* Illegal operand */
+#define ILL_ILLADR      3 /* Illegal addressing mode */
+#define ILL_ILLTRP      4 /* Illegal trap */
+#define ILL_PRVOPC      5 /* Privileged opcode */
+#define ILL_PRVREG      6 /* Privileged register */
+#define ILL_COPROC      7 /* Coprocessor error */
+#define ILL_BADSTK      8 /* Internal stack error */
+
+/* SIGFPE si_codes */
+
+#define FPE_INTDIV      1 /* Integer divide by zero */
+#define FPE_INTOVF      2 /* Integer overflow */
+#define FPE_FLTDIV      3 /* Floating point divide by zero */
+#define FPE_FLTOVF      4 /* Floating point overflow */
+#define FPE_FLTUND      5 /* Floating point underflow */
+#define FPE_FLTRES      6 /* Floating point inexact result */
+#define FPE_FLTINV      7 /* Floating point invalid operation */
+#define FPE_FLTSUB      8 /* Subscript out of range */
+
+/* SIGSEGV si_codes */
+
+#define SEGV_MAPERR     1 /* Address not mapped to object */
+#define SEGV_ACCERR     2 /* Invalid permissions for mapped object */
+
+/* SIGBUS si_codes */
+
+#define BUS_ADRALN      1 /* Invalid address alignment */
+#define BUS_ADRERR      2 /* Non-existent physical address */
+#define BUS_OBJERR      3 /* Object specific hardware error */
+
+/* SIGTRAP si_codes */
+
+#define TRAP_BRKPT      1 /* Process breakpoint */
+#define TRAP_TRACE      2 /* Process trace trap */
+
+/* SIGPOLL si_codes */
+
+#define POLL_IN         1 /* Data input available */
+#define POLL_OUT        2 /* Output buffers available */
+#define POLL_MSG        3 /* Input message available */
+#define POLL_ERR        4 /* I/O error */
+#define POLL_PRI        5 /* High priority input available */
+#define POLL_HUP        6 /* Device disconnected */
+
+/* Values for the sigev_notify field of struct sigevent */
+
+#define SIGEV_NONE      0 /* No asynchronous notification is delivered */
+#define SIGEV_SIGNAL    1 /* Notify via signal,with an application-defined value */
+#ifdef CONFIG_SIG_EVTHREAD
+#  define SIGEV_THREAD  2 /* A notification function is called */
 #endif
+
+#define SIGEV_THREAD_ID 4 /* Notify a specific thread via signal. */
+
+/* sigaltstack stack size */
+
+#define MINSIGSTKSZ     CONFIG_PTHREAD_STACK_MIN     /* Smallest signal stack size */
+#define SIGSTKSZ        CONFIG_PTHREAD_STACK_DEFAULT /* Default signal stack size */
+
+/* define signal handlers stack on an alternate stack or the current thread */
+
+#define SS_ONSTACK      1
+#define SS_DISABLE      2
+
+/* Special values of sa_handler used by sigaction and sigset.  They are all
+ * treated like NULL for now.  This is okay for SIG_DFL and SIG_IGN because
+ * in NuttX, the default action for all signals is to ignore them.
+ */
+
+#define SIG_ERR         ((_sa_handler_t)-1)  /* And error occurred */
+#define SIG_IGN         ((_sa_handler_t)0)   /* Ignore the signal */
+
+#ifdef CONFIG_SIG_DEFAULT
+#  define SIG_DFL       ((_sa_handler_t)1)   /* Default signal action */
+#  define SIG_HOLD      ((_sa_handler_t)2)   /* Used only with sigset() */
+#else
+#  define SIG_DFL       ((_sa_handler_t)0)   /* Default is SIG_IGN for all signals */
+#  define SIG_HOLD      ((_sa_handler_t)1)   /* Used only with sigset() */
+#endif
+
+#define GOOD_SIGNO(s)     (((unsigned)(s)) <= ((unsigned)(MAX_SIGNO)))
+#define UNCAUGHT_SIGNO(s) ((s) == SIGKILL || (s) == SIGSTOP)
+
+#define tkill(tid, signo) tgkill((pid_t)-1, tid, signo)
+
+/****************************************************************************
+ * Public Types
+ ****************************************************************************/
+
+/* This defines a set of 32 signals (numbered 0 through 31).
+ * REVISIT: Signal 0 is, however, not generally usable since that value has
+ * special meaning in some circumstances (e.g., kill()).
+ */
+
+struct sigset_s
+{
+  uint32_t _elem[_SIGSET_NELEM];
+};
+
+typedef struct sigset_s sigset_t; /* Bit set of _NSIG signals */
+
+/* Possibly volatile-qualified integer type of an object that can be accessed
+ * as an atomic entity, even in the presence of asynchronous interrupts.
+ */
+
+typedef volatile int sig_atomic_t;
+
+/* This defines the type of the siginfo si_value field */
+
+union sigval
+{
+  int       sival_int;       /* Integer value */
+  FAR void *sival_ptr;       /* Pointer value */
+};
+
+/* This structure contains elements that define a queue signal.
+ * The following is used to attach a signal to a message queue
+ * to notify a task when a message is available on a queue.
+ */
+
+typedef CODE void (*sigev_notify_function_t)(union sigval value);
+
+typedef struct sigevent
+{
+  int          sigev_notify; /* Notification method: SIGEV_SIGNAL, SIGEV_NONE, or SIGEV_THREAD */
+  int          sigev_signo;  /* Notification signal */
+  union sigval sigev_value;  /* Data passed with notification */
+
+  union
+    {
+#ifdef CONFIG_SIG_EVTHREAD
+      struct
+        {
+          /* Notification function */
+
+          sigev_notify_function_t _function;
+
+          /* Notification attributes (not used) */
+
+          FAR struct pthread_attr_s *_attribute;
+        } _sigev_thread;
+#endif
+      pid_t _tid; /* ID of thread to signal */
+    } _sigev_un;
+} sigevent_t;
+
+#define sigev_notify_function   _sigev_un._sigev_thread._function
+#define sigev_notify_attributes _sigev_un._sigev_thread._attribute
+#define sigev_notify_thread_id  _sigev_un._tid
+
+/* The following types is used to pass parameters to/from signal handlers */
+
+struct siginfo
+{
+  uint8_t      si_signo;     /* Identifies signal */
+  uint8_t      si_code;      /* Source: SI_USER, SI_QUEUE, SI_TIMER, SI_ASYNCIO, or SI_MESGQ */
+  uint8_t      si_errno;     /* Zero or errno value associated with signal */
+  union sigval si_value;     /* Data passed with signal */
+#ifdef CONFIG_SCHED_HAVE_PARENT
+  pid_t        si_pid;       /* Sending task ID */
+  int          si_status;    /* Exit value or signal (SIGCHLD only). */
+#endif
+#if 0                        /* Not implemented */
+  FAR void    *si_addr;      /* Report address with SIGFPE, SIGSEGV, or SIGBUS */
+#endif
+  FAR void    *si_user;      /* The User info associated with sigaction */
+};
+
+typedef struct siginfo siginfo_t;
+
+/* Non-standard convenience definition of signal handling function types.
+ * These should be used only internally within the NuttX signal logic.
+ */
+
+typedef CODE void (*_sa_handler_t)(int signo);
+typedef CODE void (*_sa_sigaction_t)(int signo, FAR siginfo_t *siginfo,
+                                     FAR void *context);
+
+/* glibc definition of signal handling function types */
+
+typedef _sa_handler_t sighandler_t;
+
+/* The following structure defines the action to take for given signal */
+
+struct sigaction
+{
+  union
+  {
+    _sa_handler_t   _sa_handler;
+    _sa_sigaction_t _sa_sigaction;
+  } sa_u;
+  sigset_t          sa_mask;
+  int               sa_flags;
+  union
+  {
+    CODE void (*sa_restorer)(void);
+    FAR void         *sa_user; /* Passed to siginfo.si_user (non-standard) */
+  };
+};
+
+/* Definitions that adjust the non-standard naming */
+
+#define sa_handler   sa_u._sa_handler
+#define sa_sigaction sa_u._sa_sigaction
+
+/* Structure describing a signal stack.  */
+
+typedef struct
+{
+  FAR void *ss_sp;
+  int ss_flags;
+  size_t ss_size;
+} stack_t;
+
+typedef CODE void (*sig_t)(int);
 
 /****************************************************************************
  * Public Function Prototypes
  ****************************************************************************/
 
-struct timespec;  /* Forward reference */
-
-/****************************************************************************
- * Name: nxsig_ismember
- *
- * Description:
- *   This function tests whether the signal specified by signo is a member
- *   of the set specified by set.
- *
- * Input Parameters:
- *   set - Signal set to test
- *   signo - Signal to test for
- *
- * Returned Value:
- *   This is an internal OS interface and should not be used by applications.
- *   On success, it returns 0 if the signal is not a member, 1 if the signal
- *   is a member of the set.
- *   A negated errno value is returned on failure.
- *
- *    EINVAL - The signo argument is invalid.
- *
- * Assumptions:
- *
- ****************************************************************************/
-
-int nxsig_ismember(FAR const sigset_t *set, int signo);
-
-/****************************************************************************
- * Name: nxsig_addset
- *
- * Description:
- *   This function adds the signal specified by signo to the signal set
- *   specified by set.
- *
- * Input Parameters:
- *   set - Signal set to add signal to
- *   signo - Signal to add
- *
- * Returned Value:
- *   This is an internal OS interface and should not be used by applications.
- *   It follows the NuttX internal error return policy:  Zero (OK) is
- *   returned on success.  A negated errno value is returned on failure.
- *
- *    EINVAL - The signo argument is invalid.
- *
- * Assumptions:
- *
- ****************************************************************************/
-
-int nxsig_addset(FAR sigset_t *set, int signo);
-
-/****************************************************************************
- * Name: nxsig_delset
- *
- * Description:
- *   This function deletes the signal specified by signo from the signal
- *   set specified by the 'set' argument.
- *
- * Input Parameters:
- *   set   - Signal set to delete the signal from
- *   signo - Signal to delete
- *
- * Returned Value:
- *   This is an internal OS interface and should not be used by applications.
- *   It follows the NuttX internal error return policy:  Zero (OK) is
- *   returned on success.  A negated errno value is returned on failure.
- *
- *    EINVAL - The signo argument is invalid.
- *
- * Assumptions:
- *
- ****************************************************************************/
-
-int nxsig_delset(FAR sigset_t *set, int signo);
-
-/****************************************************************************
- * Name: nxsig_nandset
- *
- * Description:
- *   This function returns the intersection of the left set and the
- *   complement of the right set in dest.
- *
- * Input Parameters:
- *   dest  - The location to store the result
- *   left  - The uncomplemented set used in the intersection
- *   right - The set that will be complemented and used in the intersection
- *
- * Returned Value:
- *   This is an internal OS interface and should not be used by applications.
- *   It follows the NuttX internal error return policy:  Zero (OK) is
- *   returned on success.  A negated errno value is returned on failure.
- *
- * Assumptions:
- *
- ****************************************************************************/
-
-int nxsig_nandset(FAR sigset_t *dest, FAR const sigset_t *left,
-                  FAR const sigset_t *right);
-
-/****************************************************************************
- * Name: nxsig_xorset
- *
- * Description:
- *   This function returns the xor of right and left in dest.
- *
- * Input Parameters:
- *   dest        - Location to return the union
- *   left, right - The two sets to use in the union
- *
- * Returned Value:
- *   This is an internal OS interface and should not be used by applications.
- *   It follows the NuttX internal error return policy:  Zero (OK) is
- *   returned on success.  A negated errno value is returned on failure.
- *
- *     0 on success or -1 on failure
- *
- * Assumptions:
- *
- ****************************************************************************/
-
-int nxsig_xorset(FAR sigset_t *dest, FAR const sigset_t *left,
-                 FAR const sigset_t *right);
-
-/****************************************************************************
- * Name: nxsig_pendingset
- *
- * Description:
- *   Convert the list of pending signals into a signal set
- *
- * Input Parameters:
- *   stcb - The specific tcb of return pending set.
- *
- * Returned Value:
- *   Return the pending signal set.
- *
- * Assumptions:
- *
- ****************************************************************************/
-
-sigset_t nxsig_pendingset(FAR struct tcb_s *stcb);
-
-/****************************************************************************
- * Name: nxsig_procmask
- *
- * Description:
- *   This function allows the calling process to examine and/or change its
- *   signal mask.  If the 'set' is not NULL, then it points to a set of
- *   signals to be used to change the currently blocked set.  The value of
- *   'how' indicates the manner in which the set is changed.
- *
- *   If there any pending unblocked signals after the call to
- *   nxsig_procmask(), those signals will be delivered before
- *    nxsig_procmask() returns.
- *
- *   If nxsig_procmask() fails, the signal mask of the process is not changed
- *   by this function call.
- *
- *   This is an internal OS interface.  It is functionally equivalent to
- *   sigprocmask() except that it does not modify the errno value.
- *
- * Input Parameters:
- *   how - How the signal mask will be changed:
- *         SIG_BLOCK   - The resulting set is the union of the current set
- *                       and the signal set pointed to by 'set'.
- *         SIG_UNBLOCK - The resulting set is the intersection of the current
- *                       set and the complement of the signal set pointed to
- *                       by 'set'.
- *         SIG_SETMASK - The resulting set is the signal set pointed to by
- *                       'set'.
- *   set  - Location of the new signal mask
- *   oset - Location to store the old signal mask
- *
- * Returned Value:
- *   This is an internal OS interface and should not be used by applications.
- *   It follows the NuttX internal error return policy:  Zero (OK) is
- *   returned on success.  A negated errno value is returned on failure.
- *
- *    EINVAL - The 'how' argument is invalid.
- *
- ****************************************************************************/
-
-int nxsig_procmask(int how, FAR const sigset_t *set, FAR sigset_t *oset);
-
-/****************************************************************************
- * Name: nxsig_action
- *
- * Description:
- *   This function allows the calling process to examine and/or specify the
- *   action to be associated with a specific signal.  This is a non-standard,
- *   OS internal version of the standard sigaction() function. nxsig_action()
- *   adds an additional parameter, force, that is used to set default signal
- *   actions (which may not normally be settable).  nxsig_action() does not
- *   alter the errno variable.
- *
- * Input Parameters:
- *   sig   - Signal of interest
- *   act   - Location of new handler
- *   oact  - Location to store only handler
- *   force - Force setup of the signal handler
- *
- * Returned Value:
- *   Zero (OK) is returned on success; a negated errno value is returned
- *   on failure.
- *
- ****************************************************************************/
-
-int nxsig_action(int signo, FAR const struct sigaction *act,
-                 FAR struct sigaction *oact, bool force);
-
-/****************************************************************************
- * Name: nxsig_queue
- *
- * Description:
- *   This function sends the signal specified by signo with the signal
- *   parameter value to the process specified by pid.
- *
- *   If the receiving process has the signal blocked via the sigprocmask,
- *   the signal will pend until it is unmasked. Only one pending signal (per
- *   signo) is retained.  This is consistent with POSIX which states, "If
- *   a subsequent occurrence of a pending signal is generated, it is
- *   implementation defined as to whether the signal is delivered more than
- *   once.
- *
- *   This is an internal OS interface.  It is functionally equivalent to
- *   sigqueue() except that it does not modify the errno value.
- *
- * Input Parameters:
- *   pid   - Process ID of task to receive signal
- *   signo - Signal number
- *   value - Value to pass to task with signal
- *
- * Returned Value:
- *   This is an internal OS interface and should not be used by applications.
- *   It follows the NuttX internal error return policy:  Zero (OK) is
- *   returned on success.  A negated errno value is returned on failure.
- *
- *    EGAIN  - The limit of signals which may be queued has been reached.
- *    EINVAL - sig was invalid.
- *    EPERM  - The  process  does  not  have  permission to send the
- *             signal to the receiving process.
- *    ESRCH  - No process has a PID matching pid.
- *
- ****************************************************************************/
-
-int nxsig_queue(int pid, int signo, union sigval value);
-
-/****************************************************************************
- * Name: nxsig_kill
- *
- * Description:
- *   The nxsig_kill() system call can be used to send any signal to any task.
- *
- *   This is an internal OS interface.  It is functionally equivalent to
- *   the POSIX standard kill() function but does not modify the application
- *   errno variable.
- *
- *   Limitation: Sending of signals to 'process groups' is not
- *   supported in NuttX
- *
- * Input Parameters:
- *   pid - The id of the task to receive the signal.  The POSIX nxsig_kill
- *     specification encodes process group information as zero and
- *     negative pid values.  Only positive, non-zero values of pid are
- *     supported by this implementation.
- *   signo - The signal number to send.  If signo is zero, no signal is
- *     sent, but all error checking is performed.
- *
- * Returned Value:
- *   This is an internal OS interface and should not be used by applications.
- *   It follows the NuttX internal error return policy:  Zero (OK) is
- *   returned on success.  A negated errno value is returned on failure.
- *
- *    EINVAL An invalid signal was specified.
- *    EPERM  The process does not have permission to send the
- *           signal to any of the target processes.
- *    ESRCH  The pid or process group does not exist.
- *    ENOSYS Do not support sending signals to process groups.
- *
- ****************************************************************************/
-
-int nxsig_kill(pid_t pid, int signo);
-
-/****************************************************************************
- * Name: nxsig_tgkill
- *
- * Description:
- *   The tgkill() system call can be used to send any signal to a thread.
- *   See kill() for further information as this is just a simple wrapper
- *   around the kill() function.
- *
- * Input Parameters:
- *   gid   - The id of the task to receive the signal.
- *   tid   - The id of the thread to receive the signal. Only positive,
- *           non-zero values of 'tid' are supported.
- *   signo - The signal number to send.  If 'signo' is zero, no signal is
- *           sent, but all error checking is performed.
- *
- * Returned Value:
- *    On success the signal was send and zero is returned. On error -1 is
- *    returned, and errno is set one of the following error numbers:
- *
- *    EINVAL An invalid signal was specified.
- *    EPERM  The thread does not have permission to send the
- *           signal to the target thread.
- *    ESRCH  No thread could be found corresponding to that
- *           specified by the given thread ID
- *    ENOSYS Do not support sending signals to process groups.
- *
- ****************************************************************************/
-
-int nxsig_tgkill(pid_t pid, pid_t tid, int signo);
-
-/****************************************************************************
- * Name: nxsig_clockwait
- *
- * Description:
- *   This function selects the pending signal set specified by the argument
- *   set.  If multiple signals are pending in set, it will remove and return
- *   the lowest numbered one.  If no signals in set are pending at the time
- *   of the call, the calling process will be suspended until one of the
- *   signals in set becomes pending, OR until the process is interrupted by
- *   an unblocked signal, OR until the time interval specified by timeout
- *   (if any), has expired. If timeout is NULL, then the timeout interval
- *   is forever.
- *
- *   If the info argument is non-NULL, the selected signal number is stored
- *   in the si_signo member and the cause of the signal is stored in the
- *   si_code member.  The content of si_value is only meaningful if the
- *   signal was generated by sigqueue() (or nxsig_queue).
- *
- *   This is an internal OS interface.  It is functionally equivalent to
- *   sigtimedwait() except that:
- *
- *   - It is not a cancellation point, and
- *   - It does not modify the errno value.
- *
- * Input Parameters:
- *   clockid - The ID of the clock to be used to measure the timeout.
- *   flags   - Open flags.  TIMER_ABSTIME  is the only supported flag.
- *   rqtp - The amount of time to be suspended from execution.
- *   rmtp - If the rmtp argument is non-NULL, the timespec structure
- *          referenced by it is updated to contain the amount of time
- *          remaining in the interval (the requested time minus the time
- *          actually slept)
- *
- * Returned Value:
- *   This is an internal OS interface and should not be used by applications.
- *   A negated errno value is returned on failure.
- *
- *   EAGAIN - wait time is zero.
- *   EINTR  - The wait was interrupted by an unblocked, caught signal.
- *
- * Notes:
- *  This function should be called with critical section set.
- *
- ****************************************************************************/
-
-int nxsig_clockwait(int clockid, int flags,
-                    FAR const struct timespec *rqtp,
-                    FAR struct timespec *rmtp);
-
-/****************************************************************************
- * Name: nxsig_timedwait
- *
- * Description:
- *   This function selects the pending signal set specified by the argument
- *   set.  If multiple signals are pending in set, it will remove and return
- *   the lowest numbered one.  If no signals in set are pending at the time
- *   of the call, the calling process will be suspended until one of the
- *   signals in set becomes pending, OR until the process is interrupted by
- *   an unblocked signal, OR until the time interval specified by timeout
- *   (if any), has expired. If timeout is NULL, then the timeout interval
- *   is forever.
- *
- *   If the info argument is non-NULL, the selected signal number is stored
- *   in the si_signo member and the cause of the signal is stored in the
- *   si_code member.  The content of si_value is only meaningful if the
- *   signal was generated by sigqueue().
- *
- *   This is an internal OS interface.  It is functionally equivalent to
- *   sigtimedwait() except that:
- *
- *   - It is not a cancellation point, and
- *   - It does not modify the errno value.
- *
- * Input Parameters:
- *   set     - The pending signal set.
- *   info    - The returned value (may be NULL).
- *   timeout - The amount of time to wait (may be NULL)
- *
- * Returned Value:
- *   This is an internal OS interface and should not be used by applications.
- *   It follows the NuttX internal error return policy:  Zero (OK) is
- *   returned on success.  A negated errno value is returned on failure.
- *
- *   EAGAIN - No signal specified by set was generated within the specified
- *            timeout period.
- *   EINTR  - The wait was interrupted by an unblocked, caught signal.
- *
- ****************************************************************************/
-
-int nxsig_timedwait(FAR const sigset_t *set, FAR struct siginfo *info,
-                    FAR const struct timespec *timeout);
-
-/****************************************************************************
- * Name: nxsig_nanosleep
- *
- * Description:
- *   The nxsig_nanosleep() function causes the current thread to be
- *   suspended from execution until either the time interval specified by
- *   the rqtp argument has elapsed or a signal is delivered to the calling
- *   thread and its action is to invoke a signal-catching function or to
- *   terminate the process. The suspension time may be longer than requested
- *   because the argument value is rounded up to an integer multiple of the
- *   sleep resolution or because of the scheduling of other activity by the
- *   system. But, except for the case of being interrupted by a signal, the
- *   suspension time will not be less than the time specified by rqtp, as
- *   measured by the system clock, CLOCK_REALTIME.
- *
- *   The use of the nxsig_nanosleep() function has no effect on the action
- *   or blockage of any signal.
- *
- * Input Parameters:
- *   rqtp - The amount of time to be suspended from execution.
- *   rmtp - If the rmtp argument is non-NULL, the timespec structure
- *          referenced by it is updated to contain the amount of time
- *          remaining in the interval (the requested time minus the time
- *          actually slept)
- *
- * Returned Value:
- *   If the nxsig_nanosleep() function returns because the requested time
- *   has elapsed, its return value is zero.
- *
- *   If the nxsig_nanosleep() function returns because it has been
- *   interrupted by a signal, the function returns a negated errno value
- *   indicate the interruption. If the rmtp argument is non-NULL, the
- *   timespec structure referenced by it is updated to contain the amount
- *   of time remaining in the interval (the requested time minus the time
- *   actually slept). If the rmtp argument is NULL, the remaining time is
- *   not returned.
- *
- *   If nxsig_nanosleep() fails, it returns a negated errno indicating the
- *   cause of the failure. The nxsig_nanosleep() function will fail if:
- *
- *     EINTR - The nxsig_nanosleep() function was interrupted by a signal.
- *     EINVAL - The rqtp argument specified a nanosecond value less than
- *       zero or greater than or equal to 1000 million.
- *     ENOSYS - The nxsig_nanosleep() function is not supported by this
- *       implementation.
- *
- ****************************************************************************/
-
-int nxsig_nanosleep(FAR const struct timespec *rqtp,
-                    FAR struct timespec *rmtp);
-
-/****************************************************************************
- * Name: nxsig_sleep
- *
- * Description:
- *   The nxsig_sleep() function will cause the calling thread to be
- *   suspended from execution until either the number of real-time seconds
- *   specified by the argument 'seconds' has elapsed or a signal is
- *   delivered to the calling thread.
- *
- *   This is an internal OS interface.  It is functionally equivalent to
- *   the standard sleep() application interface except that:
- *
- *   - It is not a cancellation point, and
- *   - There is no check that the action of the signal is to invoke a
- *     signal-catching function or to terminate the process.
- *
- *   See the description of sleep() for additional information that is not
- *   duplicated here.
- *
- * Input Parameters:
- *   seconds - The number of seconds to sleep
- *
- * Returned Value:
- *   If nxsig_sleep() returns because the requested time has elapsed, the
- *   value returned will be zero (OK). If nxsig_sleep() returns because of
- *   premature arousal due to delivery of a signal, the return value will
- *   be the "unslept" amount (the requested time minus the time actually
- *   slept) in seconds.
- *
- ****************************************************************************/
-
-unsigned int nxsig_sleep(unsigned int seconds);
-
-/****************************************************************************
- * Name: nxsig_usleep
- *
- * Description:
- *   The nxsig_usleep() function will cause the calling thread to be
- *   suspended from execution until either the number of real-time
- *   microseconds specified by the argument 'usec' has elapsed or a signal
- *   is delivered to the calling thread. The suspension time may be longer
- *   than requested due to the scheduling of other activity by the system.
- *
- *   This is an internal OS interface.  It is functionally equivalent to
- *   the standard nxsig_usleep() application interface except that:
- *
- *   - It is not a cancellation point, and
- *   - It does not modify the errno value.
- *
- *   See the description of usleep() for additional information that is not
- *   duplicated here.
- *
- * Input Parameters:
- *   usec - the number of microseconds to wait.
- *
- * Returned Value:
- *   This is an internal OS interface and should not be used by applications.
- *   It follows the NuttX internal error return policy:  Zero (OK) is
- *   returned on success.  A negated errno value is returned on failure.
- *
- ****************************************************************************/
-
-int nxsig_usleep(useconds_t usec);
-
-/****************************************************************************
- * Name: nxsig_notification
- *
- * Description:
- *   Notify a client an event via either a signal or a function call
- *   base on the sigev_notify field.
- *
- * Input Parameters:
- *   pid   - The task/thread ID a the client thread to be signaled.
- *   event - The instance of struct sigevent that describes how to signal
- *           the client.
- *   code  - Source: SI_USER, SI_QUEUE, SI_TIMER, SI_ASYNCIO, or SI_MESGQ
- *   work  - The work structure to queue.  Must be non-NULL if
- *           event->sigev_notify == SIGEV_THREAD.  Ignored if
- *           CONFIG_SIG_EVTHREAD is not defined.
- *
- * Returned Value:
- *   This is an internal OS interface and should not be used by applications.
- *   It follows the NuttX internal error return policy:  Zero (OK) is
- *   returned on success.  A negated errno value is returned on failure.
- *
- ****************************************************************************/
-
-int nxsig_notification(pid_t pid, FAR struct sigevent *event,
-                       int code, FAR struct sigwork_s *work);
-
-/****************************************************************************
- * Name: nxsig_cancel_notification
- *
- * Description:
- *   Cancel the notification if it doesn't send yet.
- *
- * Input Parameters:
- *   work  - The work structure to cancel
- *
- * Returned Value:
- *   None
- *
- ****************************************************************************/
-
-#ifdef CONFIG_SIG_EVTHREAD
-void nxsig_cancel_notification(FAR struct sigwork_s *work);
+#ifdef __cplusplus
+#define EXTERN extern "C"
+extern "C"
+{
 #else
-#  define nxsig_cancel_notification(work)
+#define EXTERN extern
 #endif
 
+int  kill(pid_t pid, int signo);
+int  killpg(pid_t pgrp, int signo);
+int  tgkill(pid_t pid, pid_t tid, int signo);
+void psignal(int signum, FAR const char *message);
+void psiginfo(FAR const siginfo_t *pinfo, FAR const char *message);
+int  raise(int signo);
+int  sigaction(int signo, FAR const struct sigaction *act,
+               FAR struct sigaction *oact);
+int  sigaddset(FAR sigset_t *set, int signo);
+int  sigandset(FAR sigset_t *dest, FAR const sigset_t *left,
+               FAR const sigset_t *right);
+int  sigdelset(FAR sigset_t *set, int signo);
+int  sigemptyset(FAR sigset_t *set);
+int  sigfillset(FAR sigset_t *set);
+int  sighold(int signo);
+int  sigisemptyset(FAR sigset_t *set);
+int  sigismember(FAR const sigset_t *set, int signo);
+int  sigignore(int signo);
+_sa_handler_t signal(int signo, _sa_handler_t func);
+int  sigorset(FAR sigset_t *dest, FAR const sigset_t *left,
+              FAR const sigset_t *right);
+int  sigpause(int signo);
+int  sigpending(FAR sigset_t *set);
+int  sigprocmask(int how, FAR const sigset_t *set, FAR sigset_t *oset);
+int  sigqueue(int pid, int signo, union sigval value);
+int  sigrelse(int signo);
+_sa_handler_t sigset(int signo, _sa_handler_t func);
+int  sigwait(FAR const sigset_t *set, FAR int *sig);
+int  sigtimedwait(FAR const sigset_t *set, FAR struct siginfo *value,
+                  FAR const struct timespec *timeout);
+int  sigsuspend(FAR const sigset_t *sigmask);
+int  sigwaitinfo(FAR const sigset_t *set, FAR struct siginfo *value);
+int  sigaltstack(FAR const stack_t *ss, FAR stack_t *oss);
+int  siginterrupt(int signo, int flag);
+
+/* Pthread signal management APIs */
+
+int pthread_kill(pthread_t thread, int sig);
+int pthread_sigmask(int how, FAR const sigset_t *set, FAR sigset_t *oset);
+
+#undef EXTERN
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __INCLUDE_NUTTX_SIGNAL_H */
+#endif /* __INCLUDE_SIGNAL_H */
