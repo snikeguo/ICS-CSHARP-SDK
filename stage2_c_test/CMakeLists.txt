@@ -26,7 +26,6 @@ set(ICS_NATIVEAOT_USER_C_COMPILE_FLAGS
     "-fno-omit-frame-pointer"
     "-fno-optimize-sibling-calls"
     "-fno-short-enums"
-    "-fno-stack-protector"
     "-fno-strict-aliasing"
     "-fno-unwind-tables"
     "-funwind-tables"
@@ -40,84 +39,27 @@ set(ICS_NATIVEAOT_USER_CXX_COMPILE_FLAGS
     "-fdata-sections"
     "-ffunction-sections"
     "-fno-common"
-    "-fno-exceptions"
     "-fno-omit-frame-pointer"
     "-fno-optimize-sibling-calls"
-    "-fno-rtti"
     "-fno-short-enums"
-    "-fno-stack-protector"
     "-fno-strict-aliasing"
-    "-fno-threadsafe-statics"
     "-funwind-tables"
-    "-fvisibility=hidden"
     "-g"
 )
 
 set(ICS_NATIVEAOT_USER_DEFINITIONS
-    "ARM_FEATURES"
-    "BROTLI_HAVE_LOG2=1"
-    "ENGINESDIR=/\"/mnt/sd0/openssl/lib/engines-3/\""
-    "FEATURE_64BIT_ALIGNMENT"
-    "FEATURE_BASICFREEZE"
-    "FEATURE_CACHED_INTERFACE_DISPATCH"
-    "FEATURE_CONSERVATIVE_GC"
-    "FEATURE_CUSTOM_IMPORTS"
-    "FEATURE_DYNAMIC_CODE"
-    "FEATURE_EMULATED_TLS"
-    "FEATURE_HIJACK"
-    "FEATURE_JAVAMARSHAL"
-    "FEATURE_NATIVEAOT"
-    "FEATURE_PERFTRACING"
-    "FEATURE_RX_THUNKS"
-    "HAVE_ALIGNED_ALLOC"
-    "HAVE_ARM_ACLE_H"
-    "HAVE_ATTRIBUTE_ALIGNED"
-    "HAVE_BUILTIN_ASSUME_ALIGNED"
-    "HAVE_BUILTIN_CTZ"
-    "HAVE_BUILTIN_CTZLL"
-    "HAVE_VISIBILITY_HIDDEN"
-    "HAVE_VISIBILITY_INTERNAL"
-    "HOST_ARMV7M"
-    "INTERFACE_DISPATCH_CACHE_HAS_CELL_BACKPOINTER"
     "LIBCXXABI_BAREMETAL"
     "LIBCXXABI_NON_DEMANGLING_TERMINATE"
     "LIBCXX_BUILDING_LIBCXXABI"
-    "MODULESDIR=/\"/mnt/sd0/openssl/lib/ossl-modules/\""
-    "NATIVEAOT"
-    "NDEBUG"
-    "OPENSSLDIR=/\"/mnt/sd0/openssl/\""
-    "OPENSSL_BUILDING_OPENSSL"
-    "OPENSSL_NO_ENGINE"
-    "OPENSSL_RAND_SEED_GETRANDOM"
-    "OPENSSL_USE_NODELETE"
-    "OS_LINUX"
     "STM32H7"
     "STM32H723xx"
-    "TARGET_ARMV7M"
-    "TARGET_ARM_VFP_V5_D16"
-    "TARGET_NUTTX"
-    "TARGET_UNIX"
-    "TINY_ICU"
-    "UNIX_ARM_ABI"
     "USE_HAL_DRIVER"
     "USE_PWR_LDO_SUPPLY"
-    "VERIFY_HEAP"
-    "WITH_GZFILEOP"
-    "ZLIB_COMPAT"
-    "_DEBUG"
-    "_GNU_SOURCE=1"
-    "_LIB"
     "_LIBCPP_BUILDING_LIBRARY"
-    "_LIBUNWIND_ARM_EHABI"
-    "_LIBUNWIND_DISABLE_ZERO_COST_APIS=1"
-    "_LIBUNWIND_IS_BAREMETAL"
-    "_LIBUNWIND_IS_NATIVE_ONLY"
     "_URC_FATAL_PHASE1_ERROR=_URC_FAILURE"
     "_URC_FATAL_PHASE2_ERROR=_URC_FAILURE"
-    "__ARM_ARCH_ISA_THUMB=2"
     "__KERNEL__"
     "__NuttX__"
-    "__arm__"
 )
 
 set(ICS_NATIVEAOT_USER_INCLUDE_DIRS
@@ -229,7 +171,6 @@ if(NOT CMAKE_NM)
 endif()
 
 set(ICS_NATIVEAOT_USER_BIN "${CMAKE_BINARY_DIR}/${ICS_NATIVEAOT_USER_TARGET_BASENAME}.bin")
-set(ICS_NATIVEAOT_USER_BIN_POSTBUILD "${CMAKE_BINARY_DIR}/${ICS_NATIVEAOT_USER_TARGET_BASENAME}_PostBuild.bin")
 set(ICS_NATIVEAOT_USER_DISASM "${CMAKE_BINARY_DIR}/${ICS_NATIVEAOT_USER_TARGET_BASENAME}.disasm")
 set(ICS_NATIVEAOT_USER_SYMBOLS "${CMAKE_BINARY_DIR}/${ICS_NATIVEAOT_USER_TARGET_BASENAME}.symbols")
 
@@ -243,7 +184,7 @@ add_custom_command(TARGET ${ICS_NATIVEAOT_USER_TARGET_NAME} POST_BUILD
     COMMAND python
         "${ICS_NATIVEAOT_USER_LIBS}/post_link_crc.py"
         $<TARGET_FILE:${ICS_NATIVEAOT_USER_TARGET_NAME}>
-        --bin ${ICS_NATIVEAOT_USER_BIN_POSTBUILD}
+        --bin ${ICS_NATIVEAOT_USER_BIN}
     COMMAND ${CMAKE_COMMAND}
         -DOBJDUMP=${CMAKE_OBJDUMP}
         -DNM=${CMAKE_NM}

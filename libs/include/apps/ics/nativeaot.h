@@ -63,7 +63,6 @@ struct IcsUserAotImageHeader
 int nativeaot_main(int argc, char *argv[]);
 bool ics_nativeaot_gc_set_segment_align(size_t align);
 void ics_nativeaot_set_environment(struct NativeAotProcessEnvironment *env, size_t count);
-bool ics_nativeaot_user_image_load(const char *image_path);
 bool ics_nativeaot_user_image_init_from_address(uintptr_t image_addr);
 const struct IcsUserAotImageHeader *ics_nativeaot_user_image_get_loaded_header(void);
 uintptr_t ics_nativeaot_user_image_get_export_address(const char *name);
@@ -71,4 +70,5 @@ bool ics_nativeaot_user_image_init_required_exports(void);
 const void *const *ics_nativeaot_user_image_get_classlib_functions(void);
 const void *ics_nativeaot_user_image_get_compiler_embedded_settings_blob(void);
 const void *ics_nativeaot_user_image_get_compiler_embedded_knobs_blob(void);
+void ics_nativeaot_set_image_start_address(uintptr_t address);
 #endif
