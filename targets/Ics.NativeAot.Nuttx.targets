@@ -1,21 +1,6 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <!-- Unified workspace path: automatically derive component paths if not explicitly set -->
-    <NuttxRootAppPath Condition="'$(NuttxRootAppPath)' == '' and '$(NuttxWorkSpacePath)' != ''">$(NuttxWorkSpacePath)\apps</NuttxRootAppPath>
-    <NuttxRootKernelPath Condition="'$(NuttxRootKernelPath)' == '' and '$(NuttxWorkSpacePath)' != ''">$(NuttxWorkSpacePath)\nuttx</NuttxRootKernelPath>
-    <CSharpObjectFilePath Condition="'$(CSharpObjectFilePath)' == '' and '$(NuttxWorkSpacePath)' != ''">$(NuttxWorkSpacePath)\apps\ics\NativeAot\CSharpObjectFile</CSharpObjectFilePath>
-
-    <_NuttxRootKernelPath Condition="'$(_NuttxRootKernelPath)' == ''">$(NuttxRootKernelPath)</_NuttxRootKernelPath>
-
-    <!-- Source mode: derive ILC paths from NuttX app root if not explicitly set -->
-    <_NuttxIlcBasePath Condition="'$(_NuttxIlcBasePath)' == '' and '$(NuttxRootAppPath)' != ''">$(NuttxRootAppPath)\ics\NativeAot\dotnet_toolchain\net10_linux_arm_runtime\Release</_NuttxIlcBasePath>
-    <IlcFrameworkNativePath Condition="'$(IlcFrameworkNativePath)' == '' and '$(_NuttxIlcBasePath)' != ''">$(_NuttxIlcBasePath)\native</IlcFrameworkNativePath>
-    <IlcFrameworkPath Condition="'$(IlcFrameworkPath)' == '' and '$(_NuttxIlcBasePath)' != ''">$(_NuttxIlcBasePath)\lib</IlcFrameworkPath>
-    <IlcSdkPath Condition="'$(IlcSdkPath)' == '' and '$(IlcFrameworkNativePath)' != ''">$(IlcFrameworkNativePath)</IlcSdkPath>
-    <IlcToolsPath Condition="'$(IlcToolsPath)' == '' and '$(NuttxRootAppPath)' != ''">$(NuttxRootAppPath)\ics\NativeAot\dotnet_toolchain\compiler</IlcToolsPath>
-
     <!-- Package-mode defaults -->
-    <_IcsSdkLinkTemplate Condition="'$(_IcsSdkLinkTemplate)' == ''">$(IcsCSharpSdk)\libs\link_template.cmd</_IcsSdkLinkTemplate>
     <_IcsIlcBasePath Condition="'$(_IcsIlcBasePath)' == '' and '$(IcsCSharpSdk)' != ''">$(IcsCSharpSdk)\dotnet_toolchain\net10_linux_arm_runtime\Release</_IcsIlcBasePath>
     <IlcFrameworkNativePath Condition="'$(IlcFrameworkNativePath)' == '' and '$(_IcsIlcBasePath)' != ''">$(_IcsIlcBasePath)\native</IlcFrameworkNativePath>
     <IlcFrameworkPath Condition="'$(IlcFrameworkPath)' == '' and '$(_IcsIlcBasePath)' != ''">$(_IcsIlcBasePath)\lib</IlcFrameworkPath>
@@ -24,79 +9,83 @@
     <IlcFrameworkPath Condition="'$(IlcFrameworkPath)' != '' and !HasTrailingSlash('$(IlcFrameworkPath)')">$(IlcFrameworkPath)\</IlcFrameworkPath>
     <_IcsGccRoot Condition="'$(_IcsGccRoot)' == '' and '$(IcsCSharpSdk)' != ''">$(IcsCSharpSdk)\xpack-arm-none-eabi-gcc-13.3.1-1.1</_IcsGccRoot>
     <_IcsGccBin Condition="'$(_IcsGccBin)' == '' and '$(_IcsGccRoot)' != ''">$(_IcsGccRoot)\bin</_IcsGccBin>
+    <IcsNativeAotUserCmakeGenerator Condition="'$(IcsNativeAotUserCmakeGenerator)' == ''">Ninja</IcsNativeAotUserCmakeGenerator>
+    <IcsNativeAotUserCmakeArgs Condition="'$(IcsNativeAotUserCmakeArgs)' == ''"></IcsNativeAotUserCmakeArgs>
+    <IcsNativeAotUserBuildArgs Condition="'$(IcsNativeAotUserBuildArgs)' == ''"></IcsNativeAotUserBuildArgs>
+    <IcsNativeAotUserExtraObjects Condition="'$(IcsNativeAotUserExtraObjects)' == ''"></IcsNativeAotUserExtraObjects>
+    <IcsNativeAotUserForceConfigure Condition="'$(IcsNativeAotUserForceConfigure)' == ''">false</IcsNativeAotUserForceConfigure>
     <CppCompilerAndLinker Condition="'$(CppCompilerAndLinker)' == '' and '$(_IcsGccBin)' != ''">arm-none-eabi-gcc.exe</CppCompilerAndLinker>
     <CppLinker Condition="'$(CppLinker)' == '' and '$(CppCompilerAndLinker)' != ''">$(CppCompilerAndLinker)</CppLinker>
     <ObjCopyName Condition="'$(ObjCopyName)' == '' and '$(_IcsGccBin)' != ''">arm-none-eabi-objcopy.exe</ObjCopyName>
     <_CommandProbe Condition="'$(OS)' == 'Windows_NT' and '$(_IcsGccBin)' != ''">cmd /c &quot;set PATH=$(_IcsGccBin);%PATH%&amp;&amp; where /Q&quot;</_CommandProbe>
-    <_SkipNativeLink Condition="'$(IcsCSharpSdk)' != '' or ('$(PublishAot)' == 'true' and '$(CSharpObjectFilePath)' != '')">true</_SkipNativeLink>
+    <_SkipNativeLink Condition="'$(IcsCSharpSdk)' != ''">true</_SkipNativeLink>
 
     <!-- When we will skip native linking, bypass linker probe on Windows -->
-    <IcsBypassLinkerProbe Condition="'$(IcsBypassLinkerProbe)' == '' and '$(PublishAot)' == 'true' and ( '$(CSharpObjectFilePath)' != '' or '$(IcsCSharpSdk)' != '' )">true</IcsBypassLinkerProbe>
+    <IcsBypassLinkerProbe Condition="'$(IcsBypassLinkerProbe)' == '' and '$(PublishAot)' == 'true' and '$(IcsCSharpSdk)' != ''">true</IcsBypassLinkerProbe>
     <CppCompilerAndLinker Condition="'$(OS)' == 'Windows_NT' and '$(IcsBypassLinkerProbe)' == 'true'">cmd</CppCompilerAndLinker>
     <CppLinker Condition="'$(OS)' == 'Windows_NT' and '$(IcsBypassLinkerProbe)' == 'true'">cmd</CppLinker>
     <ObjCopyName Condition="'$(OS)' == 'Windows_NT' and '$(IcsBypassLinkerProbe)' == 'true'">cmd</ObjCopyName>
   </PropertyGroup>
 
-
-  <Target Name="IcsExportCSharpObjectAndOptionalNuttxBuild"
-        BeforeTargets="LinkNative"
-        DependsOnTargets="IlcCompile"
-      Condition="'$(PublishAot)' == 'true' and '$(CSharpObjectFilePath)' != ''">
-    <Message Text="CSharpObjectFilePath exists -> copy $(NativeObject) to $(CSharpObjectFilePath)\$(TargetName)$(NativeObjectExt) and skip native linking." Importance="high" />
-    <MakeDir Directories="$(CSharpObjectFilePath)" />
-    <Copy SourceFiles="$(NativeObject)"
-          DestinationFiles="$(CSharpObjectFilePath)\$(TargetName)$(NativeObjectExt)"
-          SkipUnchangedFiles="false"
-          Condition="Exists('$(NativeObject)')" />
-    <PropertyGroup>
-      <NativeBinary>$(NativeObject)</NativeBinary>
-    </PropertyGroup>
-
-    <Exec Condition=" '$(_NuttxRootKernelPath)' != '' and Exists('$(_NuttxRootKernelPath)') "
-          Command="$(BuildNuttxCommand)"
-          WorkingDirectory="$(_NuttxRootKernelPath)" />
-  </Target>
-
   <Target Name="IcsLinkWithSdkTemplate"
         BeforeTargets="LinkNative"
         DependsOnTargets="IlcCompile"
-        Condition="'$(PublishAot)' == 'true' and '$(IcsCSharpSdk)' != '' and Exists('$(_IcsSdkLinkTemplate)') and '$(CSharpObjectFilePath)' == ''">
-    <Message Text="IcsCSharpSdk detected -> copy $(NativeObject) to output dir and skip native linking." Importance="high" />
+      Condition="'$(PublishAot)' == 'true' and '$(IcsCSharpSdk)' != ''">
+      <Message Text="IcsCSharpSdk detected -> prepare ics_nativeaot_user and run CMake." Importance="high" />
+
     <PropertyGroup>
-      <_IcsSdkObjectPath Condition="'$(_IcsSdkObjectPath)' == ''">$([System.IO.Path]::GetFullPath('$(NativeObject)'))</_IcsSdkObjectPath>
-      <_IcsSdkOutputDir Condition="'$(_IcsSdkOutputDir)' == '' and '$(PublishDir)' != ''">$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\$(PublishDir)'))</_IcsSdkOutputDir>
-      <_IcsSdkOutputDir Condition="'$(_IcsSdkOutputDir)' == ''">$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\$(OutputPath)'))</_IcsSdkOutputDir>
-    </PropertyGroup>
-    <PropertyGroup Condition="!HasTrailingSlash('$(_IcsSdkOutputDir)')">
-      <_IcsSdkOutputDir>$(_IcsSdkOutputDir)\</_IcsSdkOutputDir>
+    <_IcsSdkObjectPath>$([System.IO.Path]::GetFullPath('$(NativeObject)'))</_IcsSdkObjectPath>
+    <_IcsNativeAotUserDir>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\ics_nativeaot_user'))</_IcsNativeAotUserDir>
+    <_IcsNativeAotUserBuildDir>$(_IcsNativeAotUserDir)\build</_IcsNativeAotUserBuildDir>
+
+    <_IcsSdkLibsDir>$([System.IO.Path]::GetFullPath('$(IcsCSharpSdk)\libs'))</_IcsSdkLibsDir>
+    <_IcsSdkTemplateCmake>$(_IcsSdkLibsDir)\CMakeLists.txt.ics_nativeaot_user.cmake</_IcsSdkTemplateCmake>
+    <_IcsSdkTemplateHeader>$(_IcsSdkLibsDir)\IcsUserAotImageHeader.c</_IcsSdkTemplateHeader>
+
+    <_IcsUserCmakeLists>$(_IcsNativeAotUserDir)\CMakeLists.txt</_IcsUserCmakeLists>
+    <_IcsUserHeader>$(_IcsNativeAotUserDir)\IcsUserAotImageHeader.c</_IcsUserHeader>
+
+    <_IcsNativeAotUserObjects>$(_IcsSdkObjectPath)</_IcsNativeAotUserObjects>
+    <_IcsNativeAotUserObjects Condition="'$(IcsNativeAotUserExtraObjects)' != ''">$(_IcsNativeAotUserObjects);$(IcsNativeAotUserExtraObjects)</_IcsNativeAotUserObjects>
+    <_IcsNativeAotUserObjectsForCmake>$([System.String]::Copy('$(_IcsNativeAotUserObjects)').Replace('\','/'))</_IcsNativeAotUserObjectsForCmake>
+
+    <_IcsNeedConfigure>true</_IcsNeedConfigure>
+      <_IcsNeedConfigure Condition="Exists('$(_IcsNativeAotUserBuildDir)\CMakeCache.txt') and '$(IcsNativeAotUserForceConfigure)' != 'true' and ('$(IcsNativeAotUserCmakeGenerator)' != 'Ninja' or Exists('$(_IcsNativeAotUserBuildDir)\build.ninja'))">false</_IcsNeedConfigure>
     </PropertyGroup>
 
     <PropertyGroup>
       <NativeBinary>$(NativeObject)</NativeBinary>
     </PropertyGroup>
 
-    <MakeDir Directories="$(_IcsSdkOutputDir)" />
-    <Copy SourceFiles="$(NativeObject)"
-          DestinationFiles="$(_IcsSdkOutputDir)$(TargetName)$(NativeObjectExt)"
-          SkipUnchangedFiles="false"
-          Condition="Exists('$(NativeObject)')" />
+      <MakeDir Directories="$(_IcsNativeAotUserDir);$(_IcsNativeAotUserBuildDir)" />
 
-    <PropertyGroup>
-      <_IcsSdkLinkCmd>$(_IcsSdkOutputDir)link.cmd</_IcsSdkLinkCmd>
-    </PropertyGroup>
+      <Error Condition="!Exists('$(_IcsSdkTemplateCmake)')"
+         Text="Missing SDK template file: $(_IcsSdkTemplateCmake)" />
+      <Error Condition="!Exists('$(_IcsSdkTemplateHeader)')"
+         Text="Missing SDK template file: $(_IcsSdkTemplateHeader)" />
 
-    <Exec Condition="'$(OS)' == 'Windows_NT'"
-          Command="powershell -NoProfile -ExecutionPolicy Bypass -Command &quot;$tpl='$(_IcsSdkLinkTemplate)'; $out='$(_IcsSdkLinkCmd)'; $sdk='$(IcsCSharpSdk)'.TrimEnd('\','/'); $obj='$(_IcsSdkObjectPath)'; $text=(Get-Content -Raw $tpl) -replace '__ICS_SDK_ROOT__', $sdk -replace '__ICS_CSHARP_OBJECT_PATH__', ('&quot;' + $obj + '&quot;'); Set-Content -NoNewline -Encoding Ascii -Path $out -Value $text&quot;" />
+      <Copy SourceFiles="$(_IcsSdkTemplateCmake)"
+        DestinationFiles="$(_IcsUserCmakeLists)"
+        SkipUnchangedFiles="false"
+        Condition="!Exists('$(_IcsUserCmakeLists)')" />
+      <Copy SourceFiles="$(_IcsSdkTemplateHeader)"
+        DestinationFiles="$(_IcsUserHeader)"
+        SkipUnchangedFiles="false"
+        Condition="!Exists('$(_IcsUserHeader)')" />
 
-    <Exec Condition="'$(OS)' == 'Windows_NT'"
-          Command="powershell -NoProfile -ExecutionPolicy Bypass -Command &quot;$env:PATH='$(_IcsGccBin);' + $env:PATH; &amp; '$(_IcsSdkLinkCmd)'; exit $LASTEXITCODE&quot;"
-          WorkingDirectory="$(_IcsSdkOutputDir)"
-          IgnoreExitCode="true"
+      <Exec Condition="'$(_IcsNeedConfigure)' == 'true'"
+        Command="cmake -S &quot;$(_IcsNativeAotUserDir)&quot; -B &quot;$(_IcsNativeAotUserBuildDir)&quot; -G &quot;$(IcsNativeAotUserCmakeGenerator)&quot; -DICS_NATIVEAOT_USER_SDK=&quot;$(IcsCSharpSdk)&quot; -DICS_NATIVEAOT_USER_OBJECTS=&quot;$(_IcsNativeAotUserObjectsForCmake)&quot; $(IcsNativeAotUserCmakeArgs)"
+        WorkingDirectory="$(_IcsNativeAotUserDir)"
+        IgnoreExitCode="false"
+        ConsoleToMSBuild="true"
+        StandardOutputImportance="High"
+        StandardErrorImportance="High" />
+
+      <Exec Command="cmake --build &quot;$(_IcsNativeAotUserBuildDir)&quot; $(IcsNativeAotUserBuildArgs)"
+        WorkingDirectory="$(_IcsNativeAotUserDir)"
+        IgnoreExitCode="false"
           ConsoleToMSBuild="true"
           StandardOutputImportance="High"
           StandardErrorImportance="High" />
-
-    <Error Condition="!Exists('$(_IcsSdkOutputDir)nuttx.elf')"
-           Text="link.cmd failed: nuttx.elf not generated. See output above." />
   </Target>
 </Project>
