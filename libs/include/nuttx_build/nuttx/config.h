@@ -9,7 +9,7 @@
 #define CONFIG_m 2
 
 /* General Definitions ***********************************/
-#define CONFIG_BASE_DEFCONFIG "ics-stm32h723zg/multiple_link_publish"
+#define CONFIG_BASE_DEFCONFIG "ics-stm32h723zg/multiple_link_publish-dirty"
 #define CONFIG_ALLOW_BSD_COMPONENTS 1
 #define CONFIG_ALLOW_GPL_COMPONENTS 1
 #define CONFIG_EXPERIMENTAL 1
@@ -611,7 +611,7 @@
 #define CONFIG_ICS_READFIRMWARE 1
 #define CONFIG_ICS_CRYPTO_HW_CRC32 1
 #define CONFIG_ICS_CSHARP 1
-#define CONFIG_ICS_NATIVEAOT_PUBLISH 1
+#define CONFIG_ICS_NATIVEAOT_DEV 1
 #define CONFIG_NATIVEAOT_LINKER_MULTIPLE_ENABLE 1
 #define CONFIG_ICS_HPATCHLITE_WRAPPER 1
 #define CONFIG_ICS_HPATCHLITE_BUFFER_SIZE 4096
