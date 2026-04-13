@@ -44,6 +44,7 @@ import struct
 import subprocess
 import sys
 import zlib
+from typing import Optional
 
 # -----------------------------------------------------------------------
 # IcsUserAotImageHeader 字段偏移（ARM32，与 nativeaot.h 保持同步）
@@ -70,7 +71,7 @@ def elf_to_bin(objcopy: str, elf: str, out_bin: str) -> None:
     )
 
 
-def get_symbol_addr(nm: str, elf: str, symbol: str) -> int | None:
+def get_symbol_addr(nm: str, elf: str, symbol: str) -> Optional[int]:
     """用 nm 获取符号的 VMA（十六进制地址），未找到返回 None。"""
     try:
         result = subprocess.run([nm, elf], capture_output=True, text=True, check=True)
