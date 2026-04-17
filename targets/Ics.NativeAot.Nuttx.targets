@@ -2,6 +2,7 @@
   <PropertyGroup>
     <!-- Package-mode defaults -->
     <_IcsIlcBasePath Condition="'$(_IcsIlcBasePath)' == '' and '$(IcsCSharpSdk)' != ''">$(IcsCSharpSdk)\dotnet_toolchain\net10_linux_arm_runtime\Release</_IcsIlcBasePath>
+    <IlcToolsPath Condition="'$(IlcToolsPath)' == '' and '$(IcsCSharpSdk)' != ''">$(IcsCSharpSdk)\dotnet_toolchain\compiler</IlcToolsPath>
     <IlcFrameworkNativePath Condition="'$(IlcFrameworkNativePath)' == '' and '$(_IcsIlcBasePath)' != ''">$(_IcsIlcBasePath)\native</IlcFrameworkNativePath>
     <IlcFrameworkPath Condition="'$(IlcFrameworkPath)' == '' and '$(_IcsIlcBasePath)' != ''">$(_IcsIlcBasePath)\lib</IlcFrameworkPath>
     <IlcSdkPath Condition="'$(IlcSdkPath)' == '' and '$(_IcsIlcBasePath)' != ''">$(_IcsIlcBasePath)\native</IlcSdkPath>
