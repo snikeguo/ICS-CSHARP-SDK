@@ -1,13 +1,16 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
+    <IcsEnableNuttxAot>false</IcsEnableNuttxAot>
+    <IcsEnableNuttxAot Condition="'$(IcsCSharpSdk)' != '' and '$(PublishAot)' == 'true' and '$(RuntimeIdentifier)' == 'linux-arm'">true</IcsEnableNuttxAot>
+
     <!-- Package-mode defaults -->
-    <_IcsIlcBasePath Condition="'$(_IcsIlcBasePath)' == '' and '$(IcsCSharpSdk)' != ''">$(IcsCSharpSdk)\dotnet_toolchain\net10_linux_arm_runtime\Release</_IcsIlcBasePath>
-    <IlcToolsPath Condition="'$(IlcToolsPath)' == '' and '$(IcsCSharpSdk)' != ''">$(IcsCSharpSdk)\dotnet_toolchain\compiler</IlcToolsPath>
-    <IlcFrameworkNativePath Condition="'$(IlcFrameworkNativePath)' == '' and '$(_IcsIlcBasePath)' != ''">$(_IcsIlcBasePath)\native</IlcFrameworkNativePath>
-    <IlcFrameworkPath Condition="'$(IlcFrameworkPath)' == '' and '$(_IcsIlcBasePath)' != ''">$(_IcsIlcBasePath)\lib</IlcFrameworkPath>
-    <IlcSdkPath Condition="'$(IlcSdkPath)' == '' and '$(_IcsIlcBasePath)' != ''">$(_IcsIlcBasePath)\native</IlcSdkPath>
-    <IlcFrameworkNativePath Condition="'$(IlcFrameworkNativePath)' != '' and !HasTrailingSlash('$(IlcFrameworkNativePath)')">$(IlcFrameworkNativePath)\</IlcFrameworkNativePath>
-    <IlcFrameworkPath Condition="'$(IlcFrameworkPath)' != '' and !HasTrailingSlash('$(IlcFrameworkPath)')">$(IlcFrameworkPath)\</IlcFrameworkPath>
+    <_IcsIlcBasePath Condition="'$(_IcsIlcBasePath)' == '' and '$(IcsEnableNuttxAot)' == 'true'">$(IcsCSharpSdk)\dotnet_toolchain\net10_linux_arm_runtime\Release</_IcsIlcBasePath>
+    <IlcToolsPath Condition="'$(IlcToolsPath)' == '' and '$(IcsEnableNuttxAot)' == 'true'">$(IcsCSharpSdk)\dotnet_toolchain\compiler</IlcToolsPath>
+    <IlcFrameworkNativePath Condition="'$(IlcFrameworkNativePath)' == '' and '$(IcsEnableNuttxAot)' == 'true' and '$(_IcsIlcBasePath)' != ''">$(_IcsIlcBasePath)\native</IlcFrameworkNativePath>
+    <IlcFrameworkPath Condition="'$(IlcFrameworkPath)' == '' and '$(IcsEnableNuttxAot)' == 'true' and '$(_IcsIlcBasePath)' != ''">$(_IcsIlcBasePath)\lib</IlcFrameworkPath>
+    <IlcSdkPath Condition="'$(IlcSdkPath)' == '' and '$(IcsEnableNuttxAot)' == 'true' and '$(_IcsIlcBasePath)' != ''">$(_IcsIlcBasePath)\native</IlcSdkPath>
+    <IlcFrameworkNativePath Condition="'$(IcsEnableNuttxAot)' == 'true' and '$(IlcFrameworkNativePath)' != '' and !HasTrailingSlash('$(IlcFrameworkNativePath)')">$(IlcFrameworkNativePath)\</IlcFrameworkNativePath>
+    <IlcFrameworkPath Condition="'$(IcsEnableNuttxAot)' == 'true' and '$(IlcFrameworkPath)' != '' and !HasTrailingSlash('$(IlcFrameworkPath)')">$(IlcFrameworkPath)\</IlcFrameworkPath>
     <_IcsGccRoot Condition="'$(_IcsGccRoot)' == '' and '$(IcsCSharpSdk)' != ''">$(IcsCSharpSdk)\xpack-arm-none-eabi-gcc-13.3.1-1.1</_IcsGccRoot>
     <_IcsGccBin Condition="'$(_IcsGccBin)' == '' and '$(_IcsGccRoot)' != ''">$(_IcsGccRoot)\bin</_IcsGccBin>
     <IcsNativeAotUserCmakeGenerator Condition="'$(IcsNativeAotUserCmakeGenerator)' == ''">Ninja</IcsNativeAotUserCmakeGenerator>
@@ -19,10 +22,10 @@
     <CppLinker Condition="'$(CppLinker)' == '' and '$(CppCompilerAndLinker)' != ''">$(CppCompilerAndLinker)</CppLinker>
     <ObjCopyName Condition="'$(ObjCopyName)' == '' and '$(_IcsGccBin)' != ''">arm-none-eabi-objcopy.exe</ObjCopyName>
     <_CommandProbe Condition="'$(OS)' == 'Windows_NT' and '$(_IcsGccBin)' != ''">cmd /c &quot;set PATH=$(_IcsGccBin);%PATH%&amp;&amp; where /Q&quot;</_CommandProbe>
-    <_SkipNativeLink Condition="'$(IcsCSharpSdk)' != ''">true</_SkipNativeLink>
+    <_SkipNativeLink Condition="'$(IcsEnableNuttxAot)' == 'true'">true</_SkipNativeLink>
 
     <!-- When we will skip native linking, bypass linker probe on Windows -->
-    <IcsBypassLinkerProbe Condition="'$(IcsBypassLinkerProbe)' == '' and '$(PublishAot)' == 'true' and '$(IcsCSharpSdk)' != ''">true</IcsBypassLinkerProbe>
+    <IcsBypassLinkerProbe Condition="'$(IcsBypassLinkerProbe)' == '' and '$(IcsEnableNuttxAot)' == 'true'">true</IcsBypassLinkerProbe>
     <CppCompilerAndLinker Condition="'$(OS)' == 'Windows_NT' and '$(IcsBypassLinkerProbe)' == 'true'">cmd</CppCompilerAndLinker>
     <CppLinker Condition="'$(OS)' == 'Windows_NT' and '$(IcsBypassLinkerProbe)' == 'true'">cmd</CppLinker>
     <ObjCopyName Condition="'$(OS)' == 'Windows_NT' and '$(IcsBypassLinkerProbe)' == 'true'">cmd</ObjCopyName>
@@ -31,7 +34,7 @@
   <Target Name="IcsLinkWithSdkTemplate"
         BeforeTargets="LinkNative"
         DependsOnTargets="IlcCompile"
-      Condition="'$(PublishAot)' == 'true' and '$(IcsCSharpSdk)' != ''">
+    Condition="'$(IcsEnableNuttxAot)' == 'true'">
       <Message Text="IcsCSharpSdk detected -> prepare ics_nativeaot_user and run CMake." Importance="high" />
 
     <PropertyGroup>
@@ -54,7 +57,7 @@
       <_IcsNeedConfigure Condition="Exists('$(_IcsNativeAotUserBuildDir)\CMakeCache.txt') and '$(IcsNativeAotUserForceConfigure)' != 'true' and ('$(IcsNativeAotUserCmakeGenerator)' != 'Ninja' or Exists('$(_IcsNativeAotUserBuildDir)\build.ninja'))">false</_IcsNeedConfigure>
     </PropertyGroup>
 
-    <PropertyGroup>
+    <PropertyGroup Condition="'$(_targetOS)' != 'win'">
       <NativeBinary>$(NativeObject)</NativeBinary>
     </PropertyGroup>
 
