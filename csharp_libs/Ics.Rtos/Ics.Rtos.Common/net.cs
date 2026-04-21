@@ -2,7 +2,7 @@ using System.Runtime.InteropServices;
 
 namespace Ics.Rtos.Common
 {
-    public static class InternalNetLibrary
+    public static class NetworkConfig
     {
         [DllImport("*")]
         public static extern int GetIntrefaceIndex(string ifname);

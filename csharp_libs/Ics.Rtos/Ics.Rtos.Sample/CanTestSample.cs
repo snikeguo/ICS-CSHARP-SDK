@@ -8,8 +8,7 @@ namespace Ics.Rtos.Sample
     {
         public static void Run(int deviceIndex = 0)
         {
-            CanDevice.SentStoreCapacity = 100;
-            CanDevice.GlobalReceiveQueueSize = 1000;
+           
 
             var dev = new CanDevice(deviceIndex);
 
@@ -101,9 +100,7 @@ namespace Ics.Rtos.Sample
             };
 
             testSendThread.Start();
-            Thread.Sleep(Timeout.Infinite);
 
-            dev.Close();
         }
 
         private static void PrintPacket(CanXPacket? pkt)

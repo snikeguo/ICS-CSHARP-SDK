@@ -1,3 +1,4 @@
+using Ics.Rtos.Abstractions.CanBus;
 using System;
 using System.Runtime.InteropServices;
 
@@ -9,15 +10,13 @@ namespace Ics.Rtos.Sample
         {
             var mode = "uart";
             var index = 1;
+            //UartTestSample.Run(1);
 
-            if (mode == "uart")
-            {
-                UartTestSample.Run(index);
-            }
-            else
-            {
-                CanTestSample.Run(index);
-            }
+            CanDevice.SentStoreCapacity = 100;
+            CanDevice.GlobalReceiveQueueSize = 1000;
+
+            CanTestSample.Run(0);
+            CanTestSample.Run(1);
         }
     }
 }
