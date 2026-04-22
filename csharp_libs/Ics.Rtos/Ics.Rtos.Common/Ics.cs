@@ -14,18 +14,7 @@ namespace Ics.Rtos.Common
 
         public static void Initialize()
         {
-            return;
-            try
-            {
-                var buildStringPtr = GetIcsBuildString();
-                string buildString = Marshal.PtrToStringAnsi(buildStringPtr);
-                Console.WriteLine($"ICS Build : {buildString}");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"{ex.Message}");
-                return;
-            }
+
         }
     }
 }
