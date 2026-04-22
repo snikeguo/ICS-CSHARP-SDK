@@ -169,9 +169,9 @@ set(ICS_NATIVEAOT_USER_LIBRARIES
     "${ICS_NATIVEAOT_USER_LIBS}/libBrotli.a"
     "${ICS_NATIVEAOT_USER_LIBS}/libSystem_IO_Compression_Native.a"
     "${ICS_NATIVEAOT_USER_LIBS}/libSystem_Native.a"
+    "${ICS_NATIVEAOT_USER_LIBS}/libics_csharp_pinvoke.a"
     "${ICS_NATIVEAOT_USER_LIBS}/libSystem_Net_Security_Native_Nuttx.a"
     "${ICS_NATIVEAOT_USER_LIBS}/libSystem_Security_Cryptography_Native.a"
-    "${ICS_NATIVEAOT_USER_LIBS}/libics_csharp_pinvoke.a"
     "${ICS_NATIVEAOT_USER_LIBS}/libics_nativeaot_user_export.a"
     "${ICS_NATIVEAOT_USER_LIBS}/libopenssl.a"
 )
