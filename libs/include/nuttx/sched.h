@@ -232,6 +232,8 @@ int    task_create_with_stack(FAR const char *name, int priority,
 #endif
 int    task_delete(pid_t pid);
 int    task_restart(pid_t pid);
+int    task_freeze(pid_t pid);
+int    task_thaw(pid_t pid);
 
 int    task_setcancelstate(int state, FAR int *oldstate);
 int    task_setcanceltype(int type, FAR int *oldtype);

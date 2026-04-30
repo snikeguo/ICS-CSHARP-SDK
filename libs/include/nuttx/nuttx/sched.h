@@ -110,6 +110,7 @@
 #define TCB_FLAG_JOIN_COMPLETED    (1 << 14)                     /* Bit 14: Pthread join completed */
 #define TCB_FLAG_FREE_TCB          (1 << 15)                     /* Bit 15: Free tcb after exit */
 #define TCB_FLAG_PREEMPT_SCHED     (1 << 16)                     /* Bit 16: tcb is PREEMPT_SCHED */
+#define TCB_FLAG_DEBUG_HOLD        (1 << 17)                     /* Bit 17: Held by debugger */
 
 /* Values for struct task_group tg_flags */
 
@@ -266,6 +267,7 @@ enum tstate_e
 #ifdef CONFIG_SIG_SIGSTOP_ACTION
   TSTATE_TASK_STOPPED,        /* BLOCKED      - Waiting for SIGCONT */
 #endif
+  TSTATE_TASK_DEBUG_FROZEN,   /* BLOCKED      - Runnable but held by debugger */
 
   NUM_TASK_STATES,
   TSTATE_SLEEPING = TSTATE_WAIT_SIG /* Map TSTATE_SLEEPING to TSTATE_WAIT_SIG */

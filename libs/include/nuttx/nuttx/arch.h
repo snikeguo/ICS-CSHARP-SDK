@@ -104,6 +104,7 @@
 #define DEBUGPOINT_WATCHPOINT_RW 0x03
 #define DEBUGPOINT_BREAKPOINT    0x04
 #define DEBUGPOINT_STEPPOINT     0x05
+#define DEBUGPOINT_SWBREAKPOINT  0x06
 
 /* Memory barriers may be provided in arch/spinlock.h
  *
@@ -2970,8 +2971,9 @@ void up_regs_memcpy(FAR void *dest, FAR void *src, size_t count);
  *              DEBUGPOINT_WATCHPOINT_RO - Read only watchpoint.
  *              DEBUGPOINT_WATCHPOINT_WO - Write only watchpoint.
  *              DEBUGPOINT_WATCHPOINT_RW - Read and write watchpoint.
- *              DEBUGPOINT_BREAKPOINT    - Breakpoint.
+ *              DEBUGPOINT_BREAKPOINT    - Hardware breakpoint.
  *              DEBUGPOINT_STEPPOINT     - Single step.
+ *              DEBUGPOINT_SWBREAKPOINT  - Software breakpoint.
  *   addr     - The address to be debugged.
  *   size     - The watchpoint size. only for watchpoint.
  *   callback - The callback function when debugpoint triggered.
@@ -2997,8 +2999,9 @@ int up_debugpoint_add(int type, FAR void *addr, size_t size,
  *              DEBUGPOINT_WATCHPOINT_RO - Read only watchpoint.
  *              DEBUGPOINT_WATCHPOINT_WO - Write only watchpoint.
  *              DEBUGPOINT_WATCHPOINT_RW - Read and write watchpoint.
- *              DEBUGPOINT_BREAKPOINT    - Breakpoint.
+ *              DEBUGPOINT_BREAKPOINT    - Hardware breakpoint.
  *              DEBUGPOINT_STEPPOINT     - Single step.
+ *              DEBUGPOINT_SWBREAKPOINT  - Software breakpoint.
  *   addr     - The address to be debugged.
  *   size     - The watchpoint size. only for watchpoint.
  *
