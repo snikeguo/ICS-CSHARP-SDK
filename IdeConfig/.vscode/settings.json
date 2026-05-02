@@ -1,0 +1,6 @@
+{
+  "ics.sdkRoot": "D:/Project/ICS_CSharpBoardSdk/ICS",
+  "ics.serialPort": "COM9",
+  "ics.baudRate": "115200",
+  "ics.gdbServerPort": "3333"
+}

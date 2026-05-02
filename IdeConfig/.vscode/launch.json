@@ -1,0 +1,77 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "ICS NativeAOT (attach via igdbxrpc)",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/ics_nativeaot_user/build/ics_nativeaot_user.elf",
+      "cwd": "${workspaceFolder}",
+      "MIMode": "gdb",
+      "miDebuggerPath": "${config:ics.sdkRoot}/xpack-arm-none-eabi-gcc-13.3.1-1.1/bin/arm-none-eabi-gdb.exe",
+      "miDebuggerServerAddress": "localhost:${config:ics.gdbServerPort}",
+      "preLaunchTask": "ICS: Start igdbxrpc (attach)",
+      "stopAtEntry": true,
+      "launchCompleteCommand": "None",
+      "externalConsole": false,
+      "setupCommands": [
+        {
+          "description": "Disable pagination",
+          "text": "set pagination off",
+          "ignoreFailures": true
+        },
+        {
+          "description": "Disable confirm prompts",
+          "text": "set confirm off",
+          "ignoreFailures": true
+        },
+        {
+          "description": "Set remote timeout",
+          "text": "set remotetimeout 10",
+          "ignoreFailures": true
+        },
+        {
+          "description": "Disable pending breakpoints",
+          "text": "set breakpoint pending off",
+          "ignoreFailures": true
+        }
+      ]
+    },
+    {
+      "name": "ICS NativeAOT (load via igdbxrpc)",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/ics_nativeaot_user/build/ics_nativeaot_user.elf",
+      "cwd": "${workspaceFolder}",
+      "MIMode": "gdb",
+      "miDebuggerPath": "${config:ics.sdkRoot}/xpack-arm-none-eabi-gcc-13.3.1-1.1/bin/arm-none-eabi-gdb.exe",
+      "miDebuggerServerAddress": "localhost:${config:ics.gdbServerPort}",
+      "preLaunchTask": "ICS: Start igdbxrpc (load)",
+      "stopAtEntry": true,
+      "launchCompleteCommand": "None",
+      "externalConsole": false,
+      "setupCommands": [
+        {
+          "description": "Disable pagination",
+          "text": "set pagination off",
+          "ignoreFailures": true
+        },
+        {
+          "description": "Disable confirm prompts",
+          "text": "set confirm off",
+          "ignoreFailures": true
+        },
+        {
+          "description": "Set remote timeout",
+          "text": "set remotetimeout 10",
+          "ignoreFailures": true
+        },
+        {
+          "description": "Disable pending breakpoints",
+          "text": "set breakpoint pending off",
+          "ignoreFailures": true
+        }
+      ]
+    }
+  ]
+}

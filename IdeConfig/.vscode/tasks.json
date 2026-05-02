@@ -1,0 +1,80 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "ICS: Start igdbxrpc (load)",
+      "type": "shell",
+      "command": "${config:ics.sdkRoot}/PcTools/GdbServer/Ics.IgdbXrpc.GdbServer.exe",
+      "args": [
+        "serve",
+        "--mode",
+        "serial",
+        "--serial",
+        "${config:ics.serialPort}",
+        "--baud",
+        "${config:ics.baudRate}",
+        "--listen",
+        "${config:ics.gdbServerPort}",
+        "--program",
+        "${workspaceFolder}/ics_nativeaot_user/build/ics_nativeaot_user.elf",
+        "--shell"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "isBackground": true,
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": false
+      },
+      "problemMatcher": {
+        "owner": "ics-igdbxrpc",
+        "pattern": {
+          "regexp": "^(?!)$"
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^\\[igdbxrpc\\].*$",
+          "endsPattern": "^\\[igdbxrpc\\] GDB server listening on 127\\.0\\.0\\.1:[0-9]+$"
+        }
+      }
+    },
+    {
+      "label": "ICS: Start igdbxrpc (attach)",
+      "type": "shell",
+      "command": "${config:ics.sdkRoot}/PcTools/GdbServer/Ics.IgdbXrpc.GdbServer.exe",
+      "args": [
+        "serve",
+        "--mode",
+        "serial",
+        "--serial",
+        "${config:ics.serialPort}",
+        "--baud",
+        "${config:ics.baudRate}",
+        "--listen",
+        "${config:ics.gdbServerPort}"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "isBackground": true,
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": false
+      },
+      "problemMatcher": {
+        "owner": "ics-igdbxrpc",
+        "pattern": {
+          "regexp": "^(?!)$"
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^\\[igdbxrpc\\].*$",
+          "endsPattern": "^\\[igdbxrpc\\] GDB server listening on 127\\.0\\.0\\.1:[0-9]+$"
+        }
+      }
+    }
+  ]
+}
