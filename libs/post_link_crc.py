@@ -39,7 +39,9 @@ CMake 集成示例（在用户镜像 target 的 POST_BUILD 中调用）：
 """
 
 import argparse
+import glob
 import os
+import shutil
 import struct
 import subprocess
 import sys
@@ -71,11 +73,35 @@ def elf_to_bin(objcopy: str, elf: str, out_bin: str) -> None:
     )
 
 
+def resolve_tool_path(tool: str) -> str:
+    """优先使用显式路径，其次从 PATH 和 SDK 相对目录解析工具路径。"""
+    if os.path.isabs(tool) or os.path.dirname(tool):
+        return tool
+
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    sdk_dir = os.path.dirname(script_dir)
+
+    tool_names = [tool]
+    if os.name == "nt" and os.path.splitext(tool)[1] == "":
+        tool_names.extend([f"{tool}.exe", f"{tool}.cmd", f"{tool}.bat"])
+
+    for tool_name in tool_names:
+        matches = sorted(glob.glob(os.path.join(sdk_dir, "xpack-arm-none-eabi-gcc-*", "bin", tool_name)))
+        if matches:
+            return matches[-1]
+
+    resolved = shutil.which(tool)
+    if resolved is not None:
+        return resolved
+
+    return tool
+
+
 def get_symbol_addr(nm: str, elf: str, symbol: str) -> Optional[int]:
     """用 nm 获取符号的 VMA（十六进制地址），未找到返回 None。"""
     try:
         result = subprocess.run([nm, elf], capture_output=True, text=True, check=True)
-    except subprocess.CalledProcessError:
+    except (FileNotFoundError, subprocess.CalledProcessError):
         return None
     for line in result.stdout.splitlines():
         parts = line.strip().split()
@@ -144,6 +170,8 @@ def main() -> None:
         help="nm 工具路径（默认：arm-none-eabi-nm）",
     )
     args = parser.parse_args()
+    args.objcopy = resolve_tool_path(args.objcopy)
+    args.nm = resolve_tool_path(args.nm)
 
     elf_path = args.elf
     bin_path = args.bin_path or (os.path.splitext(elf_path)[0] + ".bin")
