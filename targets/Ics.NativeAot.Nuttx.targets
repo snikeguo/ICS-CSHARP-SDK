@@ -2,6 +2,7 @@
   <PropertyGroup>
     <IcsEnableNuttxAot>false</IcsEnableNuttxAot>
     <IcsEnableNuttxAot Condition="'$(IcsCSharpSdk)' != '' and '$(PublishAot)' == 'true' and '$(RuntimeIdentifier)' == 'linux-arm'">true</IcsEnableNuttxAot>
+    <DisableUnsupportedError Condition="'$(DisableUnsupportedError)' == '' and '$(IcsEnableNuttxAot)' == 'true'">true</DisableUnsupportedError>
 
     <!-- Package-mode defaults -->
     <_IcsIlcBasePath Condition="'$(_IcsIlcBasePath)' == '' and '$(IcsEnableNuttxAot)' == 'true'">$(IcsCSharpSdk)\dotnet_toolchain\net10_linux_arm_runtime\Release</_IcsIlcBasePath>
