@@ -32,6 +32,10 @@
     <ObjCopyName Condition="'$(OS)' == 'Windows_NT' and '$(IcsBypassLinkerProbe)' == 'true'">cmd</ObjCopyName>
   </PropertyGroup>
 
+  <ItemGroup Condition="'$(IcsEnableNuttxAot)' == 'true' and '$(IlcSdkPath)' != '' and '@(PrivateSdkAssemblies)' == ''">
+    <PrivateSdkAssemblies Include="$(IlcSdkPath)\*.dll" />
+  </ItemGroup>
+
   <Target Name="IcsLinkWithSdkTemplate"
         BeforeTargets="LinkNative"
         DependsOnTargets="IlcCompile"
@@ -45,11 +49,13 @@
     <_IcsNativeAotUserInputsDir>$(_IcsNativeAotUserBuildDir)\nativeaot_inputs</_IcsNativeAotUserInputsDir>
 
     <_IcsSdkLibsDir>$([System.IO.Path]::GetFullPath('$(IcsCSharpSdk)\libs'))</_IcsSdkLibsDir>
+    <_IcsSdkIdeConfigDir>$([System.IO.Path]::GetFullPath('$(IcsCSharpSdk)\IdeConfig\.vscode'))</_IcsSdkIdeConfigDir>
     <_IcsSdkTemplateCmake>$(_IcsSdkLibsDir)\CMakeLists.txt.ics_nativeaot_user.cmake</_IcsSdkTemplateCmake>
     <_IcsSdkTemplateHeader>$(_IcsSdkLibsDir)\IcsUserAotImageHeader.c</_IcsSdkTemplateHeader>
 
     <_IcsUserCmakeLists>$(_IcsNativeAotUserDir)\CMakeLists.txt</_IcsUserCmakeLists>
     <_IcsUserHeader>$(_IcsNativeAotUserDir)\IcsUserAotImageHeader.c</_IcsUserHeader>
+    <_IcsUserVsCodeDir>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\.vscode'))</_IcsUserVsCodeDir>
 
     <_IcsSdkObjectCopyPath>$(_IcsNativeAotUserInputsDir)\$(MSBuildProjectName).o</_IcsSdkObjectCopyPath>
     <_IcsNativeAotUserObjects>$(_IcsSdkObjectCopyPath)</_IcsNativeAotUserObjects>
@@ -70,6 +76,8 @@
          Text="Missing SDK template file: $(_IcsSdkTemplateCmake)" />
       <Error Condition="!Exists('$(_IcsSdkTemplateHeader)')"
          Text="Missing SDK template file: $(_IcsSdkTemplateHeader)" />
+      <Error Condition="!Exists('$(_IcsSdkIdeConfigDir)')"
+        Text="Missing SDK VS Code config directory: $(_IcsSdkIdeConfigDir)" />
 
       <Copy SourceFiles="$(_IcsSdkTemplateCmake)"
         DestinationFiles="$(_IcsUserCmakeLists)"
@@ -98,5 +106,17 @@
           ConsoleToMSBuild="true"
           StandardOutputImportance="High"
           StandardErrorImportance="High" />
+
+      <ItemGroup>
+        <_IcsVsCodeConfigFiles Include="$(_IcsSdkIdeConfigDir)\**\*" />
+      </ItemGroup>
+
+      <MakeDir Directories="$(_IcsUserVsCodeDir)" />
+
+      <Copy SourceFiles="@(_IcsVsCodeConfigFiles)"
+        DestinationFiles="@(_IcsVsCodeConfigFiles->'$(_IcsUserVsCodeDir)\%(RecursiveDir)%(Filename)%(Extension)')"
+        SkipUnchangedFiles="true" />
+
+      <Message Text="VS Code debug config copied to $(_IcsUserVsCodeDir)" Importance="high" />
   </Target>
 </Project>
