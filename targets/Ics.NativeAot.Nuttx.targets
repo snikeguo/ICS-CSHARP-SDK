@@ -42,6 +42,7 @@
     <_IcsSdkObjectPath>$([System.IO.Path]::GetFullPath('$(NativeObject)'))</_IcsSdkObjectPath>
     <_IcsNativeAotUserDir>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\ics_nativeaot_user'))</_IcsNativeAotUserDir>
     <_IcsNativeAotUserBuildDir>$(_IcsNativeAotUserDir)\build</_IcsNativeAotUserBuildDir>
+    <_IcsNativeAotUserInputsDir>$(_IcsNativeAotUserBuildDir)\nativeaot_inputs</_IcsNativeAotUserInputsDir>
 
     <_IcsSdkLibsDir>$([System.IO.Path]::GetFullPath('$(IcsCSharpSdk)\libs'))</_IcsSdkLibsDir>
     <_IcsSdkTemplateCmake>$(_IcsSdkLibsDir)\CMakeLists.txt.ics_nativeaot_user.cmake</_IcsSdkTemplateCmake>
@@ -50,7 +51,8 @@
     <_IcsUserCmakeLists>$(_IcsNativeAotUserDir)\CMakeLists.txt</_IcsUserCmakeLists>
     <_IcsUserHeader>$(_IcsNativeAotUserDir)\IcsUserAotImageHeader.c</_IcsUserHeader>
 
-    <_IcsNativeAotUserObjects>$(_IcsSdkObjectPath)</_IcsNativeAotUserObjects>
+    <_IcsSdkObjectCopyPath>$(_IcsNativeAotUserInputsDir)\$(MSBuildProjectName).o</_IcsSdkObjectCopyPath>
+    <_IcsNativeAotUserObjects>$(_IcsSdkObjectCopyPath)</_IcsNativeAotUserObjects>
     <_IcsNativeAotUserObjects Condition="'$(IcsNativeAotUserExtraObjects)' != ''">$(_IcsNativeAotUserObjects);$(IcsNativeAotUserExtraObjects)</_IcsNativeAotUserObjects>
     <_IcsNativeAotUserObjectsForCmake>$([System.String]::Copy('$(_IcsNativeAotUserObjects)').Replace('\','/'))</_IcsNativeAotUserObjectsForCmake>
 
@@ -62,7 +64,7 @@
       <NativeBinary>$(NativeObject)</NativeBinary>
     </PropertyGroup>
 
-      <MakeDir Directories="$(_IcsNativeAotUserDir);$(_IcsNativeAotUserBuildDir)" />
+      <MakeDir Directories="$(_IcsNativeAotUserDir);$(_IcsNativeAotUserBuildDir);$(_IcsNativeAotUserInputsDir)" />
 
       <Error Condition="!Exists('$(_IcsSdkTemplateCmake)')"
          Text="Missing SDK template file: $(_IcsSdkTemplateCmake)" />
@@ -77,6 +79,10 @@
         DestinationFiles="$(_IcsUserHeader)"
         SkipUnchangedFiles="false"
         Condition="!Exists('$(_IcsUserHeader)')" />
+
+      <Copy SourceFiles="$(_IcsSdkObjectPath)"
+        DestinationFiles="$(_IcsSdkObjectCopyPath)"
+        SkipUnchangedFiles="false" />
 
       <Exec Condition="'$(_IcsNeedConfigure)' == 'true'"
         Command="cmake -S &quot;$(_IcsNativeAotUserDir)&quot; -B &quot;$(_IcsNativeAotUserBuildDir)&quot; -G &quot;$(IcsNativeAotUserCmakeGenerator)&quot; -DICS_NATIVEAOT_USER_SDK=&quot;$(IcsCSharpSdk)&quot; -DICS_NATIVEAOT_USER_OBJECTS=&quot;$(_IcsNativeAotUserObjectsForCmake)&quot; $(IcsNativeAotUserCmakeArgs)"
