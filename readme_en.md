@@ -152,3 +152,7 @@ Common capabilities include:
 - Reading and writing target memory
 - Uploading and downloading files
 - Executing an image from a specified memory address
+
+## Contact
+
+- Email: snikeguo@foxmail.com
